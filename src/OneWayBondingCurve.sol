@@ -90,6 +90,7 @@ contract OneWayBondingCurve {
         uint256 usdcValueOfAmountIn = readOracle().mul(amountIn).asUint256();
         // the incentivized USDC value of the input BAL amount
         amountOut = _getBondingCurvePriceMultiplier().mul(usdcValueOfAmountIn).asUint256();
+        // How to handle USDC being 6 decimals??
     }
 
     /// @notice the peg price of the referenced oracle as USD per BAL
@@ -99,8 +100,7 @@ contract OneWayBondingCurve {
         if (price <= 0 || answeredInRound != roundId) revert InvalidOracleAnswer();
 
         uint256 oracleDecimalsNormalizer = 10**uint256(BAL_USD_FEED.decimals());
-
-        // How to handle USDC being 6 decimals??
+        // Normalized oracle value
         value = Decimal.from(uint256(price)).div(oracleDecimalsNormalizer);
     }
 
