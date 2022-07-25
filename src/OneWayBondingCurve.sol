@@ -92,11 +92,6 @@ contract OneWayBondingCurve {
         amountOut = _getBondingCurvePriceMultiplier().mul(usdcValueOfAmountIn).asUint256();
     }
 
-    /// @notice The bonding curve price multiplier with arbitrage incentive
-    function _getBondingCurvePriceMultiplier() private pure returns (Decimal.D256 memory) {
-        return Decimal.ratio(BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE, BASIS_POINTS_GRANULARITY);
-    }
-
     /// @notice the peg price of the referenced oracle as USD per BAL
     /// @return value peg as a Decimal
     function readOracle() public view returns (Decimal.D256 memory value) {
@@ -105,6 +100,12 @@ contract OneWayBondingCurve {
 
         uint256 oracleDecimalsNormalizer = 10**uint256(BAL_USD_FEED.decimals());
 
+        // How to handle USDC being 6 decimals??
         value = Decimal.from(uint256(price)).div(oracleDecimalsNormalizer);
+    }
+
+    /// @notice The bonding curve price multiplier with arbitrage incentive
+    function _getBondingCurvePriceMultiplier() private pure returns (Decimal.D256 memory) {
+        return Decimal.ratio(BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE, BASIS_POINTS_GRANULARITY);
     }
 }
