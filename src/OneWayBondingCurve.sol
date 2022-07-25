@@ -39,7 +39,7 @@ contract OneWayBondingCurve {
      *   EVENTS   *
      **************/
 
-    event Purchase(uint256 amountIn, uint256 amountOut);
+    event Purchase(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
 
     /****************************
      *   ERRORS AND MODIFIERS   *
@@ -74,7 +74,7 @@ contract OneWayBondingCurve {
         BAL.safeTransfer(AAVE_MAINNET_RESERVE_FACTOR, amountIn);
         USDC.safeTransferFrom(AAVE_MAINNET_RESERVE_FACTOR, msg.sender, amountOut);
 
-        emit Purchase(amountIn, amountOut);
+        emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
     }
 
     /// @notice returns how close to the USDC amount cap we are
@@ -86,11 +86,11 @@ contract OneWayBondingCurve {
     /// @param amountIn the amount of BAL used to purchase
     /// @return amountOut the amount of USDC received
     function getAmountOut(uint256 amountIn) public view returns (uint256 amountOut) {
+        uint256 normalizedAmountIn = _normalizeBALDecimalsToUSDCDecimals(amountIn);
         // the actual USDC value of the input BAL amount
-        uint256 usdcValueOfAmountIn = readOracle().mul(amountIn).asUint256();
+        uint256 usdcValueOfAmountIn = readOracle().mul(normalizedAmountIn).asUint256();
         // the incentivized USDC value of the input BAL amount
         amountOut = _getBondingCurvePriceMultiplier().mul(usdcValueOfAmountIn).asUint256();
-        // How to handle USDC being 6 decimals??
     }
 
     /// @notice the peg price of the referenced oracle as USD per BAL
@@ -107,5 +107,9 @@ contract OneWayBondingCurve {
     /// @notice The bonding curve price multiplier with arbitrage incentive
     function _getBondingCurvePriceMultiplier() private pure returns (Decimal.D256 memory) {
         return Decimal.ratio(BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE, BASIS_POINTS_GRANULARITY);
+    }
+
+    function _normalizeBALDecimalsToUSDCDecimals(uint256 amount) private pure returns (uint256) {
+        return (amount * (10**6)) / (10**18);
     }
 }

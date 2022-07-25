@@ -20,14 +20,14 @@ import {SafeMath} from "@openzeppelin/utils/math/SafeMath.sol";
  * @title Decimal
  * @author dYdX
  *
- * Library that defines a fixed-point number with 18 decimal places.
+ * Library that defines a fixed-point number with 6 decimal places.
  */
 library Decimal {
     using SafeMath for uint256;
 
     // ============ Constants ============
 
-    uint256 private constant BASE = 10**18;
+    uint256 private constant BASE = 10**6;
 
     // ============ Structs ============
 
