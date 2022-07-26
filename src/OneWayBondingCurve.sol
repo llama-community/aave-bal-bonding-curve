@@ -63,6 +63,7 @@ contract OneWayBondingCurve {
     /// @notice Purchase USDC for BAL
     /// @param amountIn Amount of BAL input
     /// @return amountOut Amount of USDC received
+    /// @dev Purchaser has to approve BAL transfer before calling this function
     function purchase(uint256 amountIn) external returns (uint256 amountOut) {
         amountOut = getAmountOut(amountIn);
         if (amountOut > availableUsdcToPurchase()) revert UsdcAmountCapCrossed();
