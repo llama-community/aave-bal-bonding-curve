@@ -50,7 +50,7 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
 
         // create proposal is configured to deploy a Payload contract and call execute() as a delegatecall
         // most proposals can use this format - you likely will not have to update this
-        _createProposal();
+        // _createProposal();
 
         // these are generic steps for all proposals - no updates required
         _voteOnProposal();
@@ -78,26 +78,26 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
     /******************     Aave Gov Process - Create Proposal     *****************/
     /*******************************************************************************/
 
-    function _createProposal() public {
-        // Uncomment to deploy new implementation contracts for testing
-        // tokenDistributorAddress = deployCode("TokenDistributor.sol:TokenDistributor");
-        // ecosystemReserveAddress = deployCode("AaveEcosystemReserve.sol:AaveEcosystemReserve");
+    // function _createProposal() public {
+    //     // Uncomment to deploy new implementation contracts for testing
+    //     // tokenDistributorAddress = deployCode("TokenDistributor.sol:TokenDistributor");
+    //     // ecosystemReserveAddress = deployCode("AaveEcosystemReserve.sol:AaveEcosystemReserve");
 
-        ProposalPayload proposalPayload = new ProposalPayload();
-        proposalPayloadAddress = address(proposalPayload);
+    //     ProposalPayload proposalPayload = new ProposalPayload();
+    //     proposalPayloadAddress = address(proposalPayload);
 
-        bytes memory emptyBytes;
+    //     bytes memory emptyBytes;
 
-        targets.push(proposalPayloadAddress);
-        values.push(0);
-        signatures.push("execute()");
-        calldatas.push(emptyBytes);
-        withDelegatecalls.push(true);
+    //     targets.push(proposalPayloadAddress);
+    //     values.push(0);
+    //     signatures.push("execute()");
+    //     calldatas.push(emptyBytes);
+    //     withDelegatecalls.push(true);
 
-        vm.prank(aaveWhales[0]);
-        aaveGovernanceV2.create(shortExecutor, targets, values, signatures, calldatas, withDelegatecalls, ipfsHash);
-        proposalId = aaveGovernanceV2.getProposalsCount() - 1;
-    }
+    //     vm.prank(aaveWhales[0]);
+    //     aaveGovernanceV2.create(shortExecutor, targets, values, signatures, calldatas, withDelegatecalls, ipfsHash);
+    //     proposalId = aaveGovernanceV2.getProposalsCount() - 1;
+    // }
 
     /*******************************************************************************/
     /***************     Aave Gov Process - No Updates Required      ***************/

@@ -82,15 +82,16 @@ contract OneWayBondingCurve {
         emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
     }
 
-    /// @notice returns how close to the USDC amount cap we are
+    /// @notice Returns how close to the USDC amount cap we are
     function availableUsdcToPurchase() public view returns (uint256) {
         return usdcAmountCap - totalUsdcPurchased;
     }
 
-    /// @notice Return amount of USDC received after a bonding curve purchase
+    /// @notice Returns amount of USDC that will be received after a bonding curve purchase of BAL
     /// @param amountIn the amount of BAL used to purchase
     /// @return amountOut the amount of USDC received
     function getAmountOut(uint256 amountIn) public view returns (uint256 amountOut) {
+        // Normalizing BAL decimals (18) to USDC decimals (6)
         uint256 normalizedAmountIn = _normalizeBALDecimalsToUSDCDecimals(amountIn);
         // the actual USDC value of the input BAL amount
         uint256 usdcValueOfAmountIn = readOracle().mul(normalizedAmountIn).asUint256();
@@ -98,7 +99,7 @@ contract OneWayBondingCurve {
         amountOut = _getBondingCurvePriceMultiplier().mul(usdcValueOfAmountIn).asUint256();
     }
 
-    /// @notice the peg price of the referenced oracle as USD per BAL
+    /// @notice The peg price of the referenced oracle as USD per BAL
     /// @return value peg as a Decimal
     function readOracle() public view returns (Decimal.D256 memory value) {
         (uint80 roundId, int256 price, , , uint80 answeredInRound) = BAL_USD_FEED.latestRoundData();
