@@ -71,7 +71,7 @@ contract OneWayBondingCurve {
         totalBalReceived += amountIn;
 
         // Execute the purchase
-        BAL.safeTransfer(AAVE_MAINNET_RESERVE_FACTOR, amountIn);
+        BAL.safeTransferFrom(msg.sender, AAVE_MAINNET_RESERVE_FACTOR, amountIn);
         USDC.safeTransferFrom(AAVE_MAINNET_RESERVE_FACTOR, msg.sender, amountOut);
 
         emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
