@@ -26,13 +26,17 @@ contract OneWayBondingCurve {
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
 
+    /// @notice USDC Cap that has been approved by AAVE Governance
     uint256 public immutable usdcAmountCap;
 
     /*************************
      *   STORAGE VARIABLES   *
      *************************/
 
+    /// @notice Cumulative USDC Purchased
     uint256 public totalUsdcPurchased;
+
+    /// @notice Cumulative BAL Received
     uint256 public totalBalReceived;
 
     /**************
@@ -45,7 +49,7 @@ contract OneWayBondingCurve {
      *   ERRORS AND MODIFIERS   *
      ****************************/
 
-    error UsdcAmountCapCrossed();
+    error NotEnoughUsdcToPurchase();
     error InvalidOracleAnswer();
 
     /*******************
@@ -66,7 +70,7 @@ contract OneWayBondingCurve {
     /// @dev Purchaser has to approve BAL transfer before calling this function
     function purchase(uint256 amountIn) external returns (uint256 amountOut) {
         amountOut = getAmountOut(amountIn);
-        if (amountOut > availableUsdcToPurchase()) revert UsdcAmountCapCrossed();
+        if (amountOut > availableUsdcToPurchase()) revert NotEnoughUsdcToPurchase();
 
         totalUsdcPurchased += amountOut;
         totalBalReceived += amountIn;
