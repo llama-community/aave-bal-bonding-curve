@@ -13,11 +13,11 @@ import "../OneWayBondingCurve.sol";
 
 contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     Vm private vm = Vm(HEVM_ADDRESS);
-
+    OneWayBondingCurve public oneWayBondingCurve;
     uint256 public constant USDC_AMOUNT_CAP = 600000e6;
 
     function setUp() public {
-        OneWayBondingCurve oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
+        oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
     }
 }

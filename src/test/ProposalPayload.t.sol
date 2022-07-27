@@ -12,14 +12,18 @@ import {DSTestPlus} from "@solmate/test/utils/DSTestPlus.sol";
 import "../external/aave/IAaveGovernanceV2.sol";
 import "../external/aave/IExecutorWithTimelock.sol";
 import "../ProposalPayload.sol";
+import "../OneWayBondingCurve.sol";
+import "@openzeppelin/token/ERC20/IERC20.sol";
 
 contract ProposalPayloadTest is DSTestPlus, stdCheats {
     Vm private vm = Vm(HEVM_ADDRESS);
 
-    address private aaveTokenAddress = 0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9;
+    address private usdcTokenAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    uint256 private usdcAmount = 600000e6;
 
     address private aaveGovernanceAddress = 0xEC568fffba86c094cf06b22134B23074DFE2252c;
     address private aaveGovernanceShortExecutor = 0xEE56e2B3D491590B5b31738cC34d5232F378a8D5;
+    address private aaveMainnetReserveFactor = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
 
     IAaveGovernanceV2 private aaveGovernanceV2 = IAaveGovernanceV2(aaveGovernanceAddress);
     IExecutorWithTimelock private shortExecutor = IExecutorWithTimelock(aaveGovernanceShortExecutor);
@@ -27,8 +31,6 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
     address[] private aaveWhales;
 
     address private proposalPayloadAddress;
-    address private tokenDistributorAddress;
-    address private ecosystemReserveAddress;
 
     address[] private targets;
     uint256[] private values;
@@ -39,6 +41,8 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
 
     uint256 private proposalId;
 
+    OneWayBondingCurve public oneWayBondingCurve;
+
     function setUp() public {
         // aave whales may need to be updated based on the block being used
         // these are sometimes exchange accounts or whale who move their funds
@@ -48,21 +52,30 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
         aaveWhales.push(0x26a78D5b6d7a7acEEDD1e6eE3229b372A624d8b7);
         aaveWhales.push(0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2);
 
+        // Deploying One Way Bonding Curve
+        oneWayBondingCurve = new OneWayBondingCurve(usdcAmount);
+
         // create proposal is configured to deploy a Payload contract and call execute() as a delegatecall
         // most proposals can use this format - you likely will not have to update this
-        // _createProposal();
+        _createProposal();
 
         // these are generic steps for all proposals - no updates required
         _voteOnProposal();
         _skipVotingPeriod();
         _queueProposal();
         _skipQueuePeriod();
+
+        vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
+        vm.label(proposalPayloadAddress, "ProposalPayload");
+        vm.label(aaveMainnetReserveFactor, "aaveMainnetReserveFactor");
+        vm.label(aaveGovernanceAddress, "aaveGovernance");
+        vm.label(aaveGovernanceShortExecutor, "aaveGovernanceShortExecutor");
     }
 
     function testExecute() public {
-        // Pre-execution assertations
+        assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), 0);
         _executeProposal();
-        // Post-execution assertations
+        assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), usdcAmount);
     }
 
     function _executeProposal() public {
@@ -78,26 +91,22 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
     /******************     Aave Gov Process - Create Proposal     *****************/
     /*******************************************************************************/
 
-    // function _createProposal() public {
-    //     // Uncomment to deploy new implementation contracts for testing
-    //     // tokenDistributorAddress = deployCode("TokenDistributor.sol:TokenDistributor");
-    //     // ecosystemReserveAddress = deployCode("AaveEcosystemReserve.sol:AaveEcosystemReserve");
+    function _createProposal() public {
+        ProposalPayload proposalPayload = new ProposalPayload(oneWayBondingCurve, usdcAmount);
+        proposalPayloadAddress = address(proposalPayload);
 
-    //     ProposalPayload proposalPayload = new ProposalPayload();
-    //     proposalPayloadAddress = address(proposalPayload);
+        bytes memory emptyBytes;
 
-    //     bytes memory emptyBytes;
+        targets.push(proposalPayloadAddress);
+        values.push(0);
+        signatures.push("execute()");
+        calldatas.push(emptyBytes);
+        withDelegatecalls.push(true);
 
-    //     targets.push(proposalPayloadAddress);
-    //     values.push(0);
-    //     signatures.push("execute()");
-    //     calldatas.push(emptyBytes);
-    //     withDelegatecalls.push(true);
-
-    //     vm.prank(aaveWhales[0]);
-    //     aaveGovernanceV2.create(shortExecutor, targets, values, signatures, calldatas, withDelegatecalls, ipfsHash);
-    //     proposalId = aaveGovernanceV2.getProposalsCount() - 1;
-    // }
+        vm.prank(aaveWhales[0]);
+        aaveGovernanceV2.create(shortExecutor, targets, values, signatures, calldatas, withDelegatecalls, ipfsHash);
+        proposalId = aaveGovernanceV2.getProposalsCount() - 1;
+    }
 
     /*******************************************************************************/
     /***************     Aave Gov Process - No Updates Required      ***************/
