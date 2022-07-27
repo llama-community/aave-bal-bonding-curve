@@ -20,4 +20,10 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
     }
+
+    function testGetAmountOut() public {
+        uint256 amountIn = 1000e18;
+        console.log(oneWayBondingCurve.getOraclePrice());
+        console.log(oneWayBondingCurve.getAmountOut(amountIn));
+    }
 }

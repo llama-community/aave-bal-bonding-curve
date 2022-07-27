@@ -67,6 +67,7 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
 
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
         vm.label(proposalPayloadAddress, "ProposalPayload");
+        vm.label(usdcTokenAddress, "usdcTokenAddress");
         vm.label(aaveMainnetReserveFactor, "aaveMainnetReserveFactor");
         vm.label(aaveGovernanceAddress, "aaveGovernance");
         vm.label(aaveGovernanceShortExecutor, "aaveGovernanceShortExecutor");
