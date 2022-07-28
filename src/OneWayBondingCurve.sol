@@ -8,7 +8,7 @@ import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
 
 /// @title OneWayBondingCurve
 /// @author Llama
-/// @notice One Way Bonding Curve to sell BAL into and buy USDC from
+/// @notice One Way Bonding Curve to purchase discounted USDC for BAL upto a USDC Ceiling
 contract OneWayBondingCurve {
     using SafeERC20 for IERC20;
 
@@ -51,6 +51,7 @@ contract OneWayBondingCurve {
      *   ERRORS AND MODIFIERS   *
      ****************************/
 
+    error OnlyNonZeroAmount();
     error NotEnoughUsdcToPurchase();
     error InvalidOracleAnswer();
 
@@ -71,6 +72,8 @@ contract OneWayBondingCurve {
     /// @return amountOut Amount of USDC received
     /// @dev Purchaser has to approve BAL transfer before calling this function
     function purchase(uint256 amountIn) external returns (uint256 amountOut) {
+        if (amountIn == 0) revert OnlyNonZeroAmount();
+
         amountOut = getAmountOut(amountIn);
         if (amountOut > availableUsdcToPurchase()) revert NotEnoughUsdcToPurchase();
 
@@ -111,17 +114,17 @@ contract OneWayBondingCurve {
     }
 
     /// @notice Normalize BAL decimals (18) to USDC decimals (6)
-    function normalizeFromBALDecimalsToUSDCDecimals(uint256 amount) private pure returns (uint256) {
+    function normalizeFromBALDecimalsToUSDCDecimals(uint256 amount) public pure returns (uint256) {
         return (amount * USDC_BASE) / BAL_BASE;
     }
 
     /// @notice Normalize BAL/USD Chainlink Oracle Feed decimals to USDC decimals (6)
-    function normalizeFromOracleDecimalstoUSDCDecimals(uint256 amount) private view returns (uint256) {
+    function normalizeFromOracleDecimalstoUSDCDecimals(uint256 amount) public view returns (uint256) {
         return (amount * USDC_BASE) / (10**uint256(BAL_USD_FEED.decimals()));
     }
 
     /// @notice The bonding curve price multiplier with arbitrage incentive
-    function getBondingCurvePriceMultiplier() private pure returns (uint256) {
+    function getBondingCurvePriceMultiplier() public pure returns (uint256) {
         return ((BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE) * USDC_BASE) / BASIS_POINTS_GRANULARITY;
     }
 }
