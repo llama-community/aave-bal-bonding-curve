@@ -29,7 +29,9 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     uint256 public constant BAL_BASE = 10**18;
 
     OneWayBondingCurve public oneWayBondingCurve;
+
     uint256 public constant USDC_AMOUNT_CAP = 600000e6;
+    uint256 public constant BAL_AMOUNT_IN = 10000e18;
 
     function setUp() public {
         oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
@@ -37,16 +39,13 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     }
 
     function testGetAmountOut() public {
-        uint256 amountIn = 1000e18;
-        console.log(oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(amountIn));
+        console.log(oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(BAL_AMOUNT_IN));
         console.log(oneWayBondingCurve.getOraclePrice());
-        console.log(oneWayBondingCurve.normalizeFromOracleDecimalstoUSDCDecimals(oneWayBondingCurve.getOraclePrice()));
-        console.log(oneWayBondingCurve.getBondingCurvePriceMultiplier());
-        console.log(oneWayBondingCurve.getAmountOut(amountIn));
+        console.log(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN));
     }
 
-    function testGetBondingCurvePriceMultiplier() public {
-        assertEq(oneWayBondingCurve.getBondingCurvePriceMultiplier(), 1005000);
+    function testNormalizeFromBALDecimalsToUSDCDecimals() public {
+        assertEq(oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(BAL_AMOUNT_IN), 10000e6);
     }
 
     function testNormalizeFromOracleDecimalstoUSDCDecimals() public {
@@ -54,5 +53,9 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
         assertEq(uint256(price), 597519904);
         assertEq(oneWayBondingCurve.normalizeFromOracleDecimalstoUSDCDecimals(uint256(price)), 5975199);
+    }
+
+    function testGetBondingCurvePriceMultiplier() public {
+        assertEq(oneWayBondingCurve.getBondingCurvePriceMultiplier(), 1005000);
     }
 }
