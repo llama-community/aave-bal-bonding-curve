@@ -39,9 +39,7 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     }
 
     function testGetAmountOut() public {
-        console.log(oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(BAL_AMOUNT_IN));
-        console.log(oneWayBondingCurve.getOraclePrice());
-        console.log(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN));
+        assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), 60050749950);
     }
 
     function testGetOraclePrice() public {
