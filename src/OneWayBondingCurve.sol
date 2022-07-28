@@ -105,7 +105,7 @@ contract OneWayBondingCurve {
     }
 
     /// @notice The peg price of the referenced oracle as USD per BAL
-    /// @return value The peg value
+    /// @return value The USD peg value in USDC decimals (6)
     function getOraclePrice() public view returns (uint256 value) {
         (uint80 roundId, int256 price, , , uint80 answeredInRound) = BAL_USD_FEED.latestRoundData();
         if (price <= 0 || answeredInRound != roundId) revert InvalidOracleAnswer();
