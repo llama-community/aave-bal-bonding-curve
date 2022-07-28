@@ -39,6 +39,10 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     }
 
     function testGetAmountOut() public {
+        uint256 normalizedAmountIn = oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(BAL_AMOUNT_IN);
+        uint256 usdcValueOfAmountIn = (oneWayBondingCurve.getOraclePrice() * normalizedAmountIn) / USDC_BASE;
+        uint256 amountOut = (oneWayBondingCurve.getBondingCurvePriceMultiplier() * usdcValueOfAmountIn) / USDC_BASE;
+        assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), amountOut);
         assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), 60050749950);
     }
 
