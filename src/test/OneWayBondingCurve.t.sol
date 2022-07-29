@@ -77,6 +77,11 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), 60050749950);
     }
 
+    function testPurchaseZeroAmount() public {
+        vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
+        oneWayBondingCurve.purchase(0);
+    }
+
     /*****************
      *   FUZZ TESTS  *
      *****************/
