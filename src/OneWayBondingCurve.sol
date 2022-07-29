@@ -115,16 +115,21 @@ contract OneWayBondingCurve {
 
     /// @notice Normalize BAL decimals (18) to USDC decimals (6)
     function normalizeFromBALDecimalsToUSDCDecimals(uint256 amount) public pure returns (uint256) {
-        return (amount * USDC_BASE) / BAL_BASE;
+        return FixedPointMathLib.mulDivDown(amount, USDC_BASE, BAL_BASE);
     }
 
     /// @notice Normalize BAL/USD Chainlink Oracle Feed decimals to USDC decimals (6)
     function normalizeFromOracleDecimalstoUSDCDecimals(uint256 amount) public view returns (uint256) {
-        return (amount * USDC_BASE) / (10**uint256(BAL_USD_FEED.decimals()));
+        return FixedPointMathLib.mulDivDown(amount, USDC_BASE, 10**uint256(BAL_USD_FEED.decimals()));
     }
 
     /// @notice The bonding curve price multiplier with arbitrage incentive
     function getBondingCurvePriceMultiplier() public pure returns (uint256) {
-        return ((BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE) * USDC_BASE) / BASIS_POINTS_GRANULARITY;
+        return
+            FixedPointMathLib.mulDivDown(
+                BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE,
+                USDC_BASE,
+                BASIS_POINTS_GRANULARITY
+            );
     }
 }

@@ -38,30 +38,62 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
     }
 
-    function testGetAmountOut() public {
-        uint256 normalizedAmountIn = oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(BAL_AMOUNT_IN);
-        uint256 usdcValueOfAmountIn = (oneWayBondingCurve.getOraclePrice() * normalizedAmountIn) / USDC_BASE;
-        uint256 amountOut = (oneWayBondingCurve.getBondingCurvePriceMultiplier() * usdcValueOfAmountIn) / USDC_BASE;
-        assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), amountOut);
-        assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), 60050749950);
+    function testGetBondingCurvePriceMultiplier() public {
+        assertEq(
+            oneWayBondingCurve.getBondingCurvePriceMultiplier(),
+            ((BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE) * USDC_BASE) / BASIS_POINTS_GRANULARITY
+        );
+        assertEq(oneWayBondingCurve.getBondingCurvePriceMultiplier(), 1005000);
     }
 
     function testGetOraclePrice() public {
-        assertEq(oneWayBondingCurve.getOraclePrice(), 5975199);
-    }
-
-    function testNormalizeFromBALDecimalsToUSDCDecimals() public {
-        assertEq(oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(BAL_AMOUNT_IN), 10000e6);
-    }
-
-    function testNormalizeFromOracleDecimalstoUSDCDecimals() public {
         assertEq(BAL_USD_FEED.decimals(), 8);
         (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
         assertEq(uint256(price), 597519904);
         assertEq(oneWayBondingCurve.normalizeFromOracleDecimalstoUSDCDecimals(uint256(price)), 5975199);
+        assertEq(oneWayBondingCurve.getOraclePrice(), 5975199);
     }
 
-    function testGetBondingCurvePriceMultiplier() public {
-        assertEq(oneWayBondingCurve.getBondingCurvePriceMultiplier(), 1005000);
+    function testGetAmountOut() public {
+        uint256 normalizedAmountIn = oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(BAL_AMOUNT_IN);
+        assertEq(normalizedAmountIn, 10000e6);
+        uint256 oraclePrice = oneWayBondingCurve.getOraclePrice();
+        assertEq(oraclePrice, 5975199);
+        uint256 usdcValueOfAmountIn = (oraclePrice * normalizedAmountIn) / USDC_BASE;
+        assertEq(usdcValueOfAmountIn, 59751990000);
+        uint256 amountOut = (oneWayBondingCurve.getBondingCurvePriceMultiplier() * usdcValueOfAmountIn) / USDC_BASE;
+        assertEq(amountOut, 60050749950);
+        assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), 60050749950);
+    }
+
+    /*****************
+     *   FUZZ TESTS  *
+     *****************/
+
+    function testNormalizeFromBALDecimalsToUSDCDecimals(uint256 amount) public {
+        // Assuming reasonable Balancer amount upper bound of BAL Total Supply
+        vm.assume(amount <= BAL.totalSupply());
+
+        assertEq(oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(amount), (amount * USDC_BASE) / BAL_BASE);
+    }
+
+    function testNormalizeFromOracleDecimalstoUSDCDecimals(uint256 amount) public {
+        // Assuming reasonable Balancer upper bound price of 1 BAL = $1 Million
+        vm.assume(amount <= (1e6**uint256(BAL_USD_FEED.decimals())));
+
+        assertEq(
+            oneWayBondingCurve.normalizeFromOracleDecimalstoUSDCDecimals(amount),
+            (amount * USDC_BASE) / (10**uint256(BAL_USD_FEED.decimals()))
+        );
+    }
+
+    function testGetAmountOutFuzz(uint256 amount) public {
+        // Assuming reasonable Balancer amount upper bound of BAL Total Supply
+        vm.assume(amount <= BAL.totalSupply());
+
+        uint256 normalizedAmountIn = oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(amount);
+        uint256 usdcValueOfAmountIn = (oneWayBondingCurve.getOraclePrice() * normalizedAmountIn) / USDC_BASE;
+        uint256 amountOut = (oneWayBondingCurve.getBondingCurvePriceMultiplier() * usdcValueOfAmountIn) / USDC_BASE;
+        assertEq(oneWayBondingCurve.getAmountOut(amount), amountOut);
     }
 }
