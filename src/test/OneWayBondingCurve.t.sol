@@ -91,6 +91,15 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         oneWayBondingCurve.purchase(0);
     }
 
+    function testPurchase() public {
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
+
+        vm.expectEmit(true, true, false, true);
+        emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 60050749950);
+        oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
+    }
+
     /*****************
      *   FUZZ TESTS  *
      *****************/
