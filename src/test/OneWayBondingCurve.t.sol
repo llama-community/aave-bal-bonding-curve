@@ -52,6 +52,10 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         assertEq(USDC.allowance(AAVE_MAINNET_RESERVE_FACTOR, address(oneWayBondingCurve)), USDC_AMOUNT_CAP);
     }
 
+    function testUsdcAmountCap() public {
+        assertEq(oneWayBondingCurve.usdcAmountCap(), USDC_AMOUNT_CAP);
+    }
+
     function testGetBondingCurvePriceMultiplier() public {
         assertEq(
             oneWayBondingCurve.getBondingCurvePriceMultiplier(),
@@ -101,6 +105,9 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         BAL.approve(address(oneWayBondingCurve), 40000e18);
         oneWayBondingCurve.purchase(40000e18);
 
+        assertLe(oneWayBondingCurve.totalUsdcPurchased(), oneWayBondingCurve.usdcAmountCap());
+        assertLe(oneWayBondingCurve.totalUsdcPurchased(), USDC_AMOUNT_CAP);
+
         BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
         vm.expectRevert(OneWayBondingCurve.NotEnoughUsdcToPurchase.selector);
         oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
@@ -109,6 +116,9 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     function testPurchase() public {
         vm.startPrank(BAL_WHALE);
         BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
+
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
+        assertEq(oneWayBondingCurve.totalBalReceived(), 0);
 
         vm.expectEmit(true, true, false, true);
         emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 60050749950);
