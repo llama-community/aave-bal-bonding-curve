@@ -173,4 +173,32 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         uint256 amountOut = (oneWayBondingCurve.getBondingCurvePriceMultiplier() * usdcValueOfAmountIn) / USDC_BASE;
         assertEq(oneWayBondingCurve.getAmountOut(amount), amountOut);
     }
+
+    function testPurchaseFuzz(uint256 amount) public {
+        // Assuming upper bound of purchase of ~50000 BAL
+        vm.assume(amount > 0 && amount <= 50000e18);
+
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), amount);
+
+        uint256 initialAaveMainnetReserverFactorUsdcBalance = USDC.balanceOf(AAVE_MAINNET_RESERVE_FACTOR);
+        uint256 initialAaveMainnetReserverFactorBalBalance = BAL.balanceOf(AAVE_MAINNET_RESERVE_FACTOR);
+        uint256 initialPurchaserUsdcBalance = USDC.balanceOf(BAL_WHALE);
+        uint256 initialPurchaseBalBalance = BAL.balanceOf(BAL_WHALE);
+
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
+        assertEq(oneWayBondingCurve.totalBalReceived(), 0);
+
+        uint256 usdcAmountOut = oneWayBondingCurve.purchase(amount);
+
+        assertEq(
+            USDC.balanceOf(AAVE_MAINNET_RESERVE_FACTOR),
+            initialAaveMainnetReserverFactorUsdcBalance - usdcAmountOut
+        );
+        assertEq(BAL.balanceOf(AAVE_MAINNET_RESERVE_FACTOR), initialAaveMainnetReserverFactorBalBalance + amount);
+        assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
+        assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaseBalBalance - amount);
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
+        assertEq(oneWayBondingCurve.totalBalReceived(), amount);
+    }
 }
