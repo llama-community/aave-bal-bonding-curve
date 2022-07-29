@@ -32,7 +32,7 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
 
     OneWayBondingCurve public oneWayBondingCurve;
 
-    uint256 public constant USDC_AMOUNT_CAP = 600000e6;
+    uint256 public constant USDC_AMOUNT_CAP = 300000e6;
     uint256 public constant BAL_AMOUNT_IN = 10000e18;
     address public constant BAL_WHALE = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
 
@@ -40,7 +40,12 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
         vm.prank(AAVE_MAINNET_RESERVE_FACTOR);
         USDC.approve(address(oneWayBondingCurve), USDC_AMOUNT_CAP);
+
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
+        vm.label(address(BAL), "BalToken");
+        vm.label(address(USDC), "UsdcToken");
+        vm.label(address(BAL_USD_FEED), "BalUsdChainlinkFeed");
+        vm.label(AAVE_MAINNET_RESERVE_FACTOR, "AAVE_MAINNET_RESERVE_FACTOR");
     }
 
     function testApprovalBondingCurve() public {
@@ -89,6 +94,16 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     function testPurchaseZeroAmount() public {
         vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
         oneWayBondingCurve.purchase(0);
+    }
+
+    function testHitUSDCCeiling() public {
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), 40000e18);
+        oneWayBondingCurve.purchase(40000e18);
+
+        BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
+        vm.expectRevert(OneWayBondingCurve.NotEnoughUsdcToPurchase.selector);
+        oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
     }
 
     function testPurchase() public {
