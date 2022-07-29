@@ -10,6 +10,8 @@ import {DSTestPlus} from "@solmate/test/utils/DSTestPlus.sol";
 
 // contract dependencies
 import "../OneWayBondingCurve.sol";
+import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+import {AggregatorV3Interface} from "../external/AggregatorV3Interface.sol";
 
 contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     event Purchase(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
@@ -32,10 +34,17 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
 
     uint256 public constant USDC_AMOUNT_CAP = 600000e6;
     uint256 public constant BAL_AMOUNT_IN = 10000e18;
+    address public constant BAL_WHALE = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
 
     function setUp() public {
         oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
+        vm.prank(AAVE_MAINNET_RESERVE_FACTOR);
+        USDC.approve(address(oneWayBondingCurve), USDC_AMOUNT_CAP);
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
+    }
+
+    function testApprovalBondingCurve() public {
+        assertEq(USDC.allowance(AAVE_MAINNET_RESERVE_FACTOR, address(oneWayBondingCurve)), USDC_AMOUNT_CAP);
     }
 
     function testGetBondingCurvePriceMultiplier() public {
