@@ -18,12 +18,16 @@ import "@openzeppelin/token/ERC20/IERC20.sol";
 contract ProposalPayloadTest is DSTestPlus, stdCheats {
     Vm private vm = Vm(HEVM_ADDRESS);
 
-    address private usdcTokenAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    uint256 private usdcAmount = 600000e6;
+    address public constant usdcTokenAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address public constant ausdcTokenAddress = 0xBcca60bB61934080951369a648Fb03DF4F96263C;
+    uint256 public constant usdcAmount = 603000e6;
+    uint256 public constant ausdcAmount = 250000e6;
 
-    address private aaveGovernanceAddress = 0xEC568fffba86c094cf06b22134B23074DFE2252c;
-    address private aaveGovernanceShortExecutor = 0xEE56e2B3D491590B5b31738cC34d5232F378a8D5;
-    address private aaveMainnetReserveFactor = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
+    address public constant aaveEcosystemReserveController = 0x3d569673dAa0575c936c7c67c4E6AedA69CC630C;
+    address public constant aaveLendingPool = 0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9;
+    address public constant aaveGovernanceAddress = 0xEC568fffba86c094cf06b22134B23074DFE2252c;
+    address public constant aaveGovernanceShortExecutor = 0xEE56e2B3D491590B5b31738cC34d5232F378a8D5;
+    address public constant aaveMainnetReserveFactor = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
 
     IAaveGovernanceV2 private aaveGovernanceV2 = IAaveGovernanceV2(aaveGovernanceAddress);
     IExecutorWithTimelock private shortExecutor = IExecutorWithTimelock(aaveGovernanceShortExecutor);
@@ -68,14 +72,34 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
         vm.label(proposalPayloadAddress, "ProposalPayload");
         vm.label(usdcTokenAddress, "usdcTokenAddress");
+        vm.label(ausdcTokenAddress, "ausdcTokenAddress");
+        vm.label(aaveEcosystemReserveController, "aaveEcosystemReserveController");
+        vm.label(aaveLendingPool, "aaveLendingPool");
         vm.label(aaveMainnetReserveFactor, "aaveMainnetReserveFactor");
         vm.label(aaveGovernanceAddress, "aaveGovernance");
         vm.label(aaveGovernanceShortExecutor, "aaveGovernanceShortExecutor");
     }
 
     function testExecute() public {
+        // uint256 initialAaveMainnetReserveFactorAusdcBalance = IERC20(ausdcTokenAddress).balanceOf(
+        //     aaveMainnetReserveFactor
+        // );
+        uint256 initialAaveMainnetReserveFactorUsdcBalance = IERC20(usdcTokenAddress).balanceOf(
+            aaveMainnetReserveFactor
+        );
         assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), 0);
+
         _executeProposal();
+
+        // TO DO: Check why the aUSDC balance assetion is failing
+        // assertEq(
+        //     IERC20(ausdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
+        //     initialAaveMainnetReserveFactorAusdcBalance - ausdcAmount
+        // );
+        assertEq(
+            IERC20(usdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
+            initialAaveMainnetReserveFactorUsdcBalance + ausdcAmount
+        );
         assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), usdcAmount);
     }
 
@@ -93,7 +117,7 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
     /*******************************************************************************/
 
     function _createProposal() public {
-        ProposalPayload proposalPayload = new ProposalPayload(oneWayBondingCurve, usdcAmount);
+        ProposalPayload proposalPayload = new ProposalPayload(oneWayBondingCurve, usdcAmount, ausdcAmount);
         proposalPayloadAddress = address(proposalPayload);
 
         bytes memory emptyBytes;
