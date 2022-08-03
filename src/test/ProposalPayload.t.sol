@@ -87,6 +87,9 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
         uint256 initialAaveMainnetReserveFactorUsdcBalance = IERC20(usdcTokenAddress).balanceOf(
             aaveMainnetReserveFactor
         );
+
+        assertEq(IERC20(usdcTokenAddress).balanceOf(proposalPayloadAddress), 0);
+        assertEq(IERC20(ausdcTokenAddress).balanceOf(proposalPayloadAddress), 0);
         assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), 0);
 
         _executeProposal();
@@ -100,6 +103,8 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
             IERC20(usdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
             initialAaveMainnetReserveFactorUsdcBalance + ausdcAmount
         );
+        assertEq(IERC20(usdcTokenAddress).balanceOf(proposalPayloadAddress), 0);
+        assertEq(IERC20(ausdcTokenAddress).balanceOf(proposalPayloadAddress), 0);
         assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), usdcAmount);
     }
 
