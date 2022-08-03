@@ -12,6 +12,7 @@ import {DSTestPlus} from "@solmate/test/utils/DSTestPlus.sol";
 import "../OneWayBondingCurve.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "../external/AggregatorV3Interface.sol";
+import {ILendingPool} from "../external/aave/ILendingPool.sol";
 
 contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     event Purchase(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
@@ -26,20 +27,27 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
+    ILendingPool public constant AAVE_LENDING_POOL = ILendingPool(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
 
     uint256 public constant USDC_BASE = 10**6;
     uint256 public constant BAL_BASE = 10**18;
 
     OneWayBondingCurve public oneWayBondingCurve;
 
-    uint256 public constant USDC_AMOUNT_CAP = 300000e6;
+    // USDC equivalent of ~100,000 BAL with 50bps incentive
+    uint256 public constant USDC_AMOUNT_CAP = 603000e6;
+    uint256 public constant AUSDC_AMOUNT = 250000e6;
     uint256 public constant BAL_AMOUNT_IN = 10000e18;
     address public constant BAL_WHALE = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
 
     function setUp() public {
         oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
-        vm.prank(AAVE_MAINNET_RESERVE_FACTOR);
+
+        vm.startPrank(AAVE_MAINNET_RESERVE_FACTOR);
+        AAVE_LENDING_POOL.withdraw(address(USDC), AUSDC_AMOUNT, AAVE_MAINNET_RESERVE_FACTOR);
+        // Now Aave Mainnet Reserve Factor will have enough USDC to meet USDC_AMOUNT_CAP
         USDC.approve(address(oneWayBondingCurve), USDC_AMOUNT_CAP);
+        vm.stopPrank();
 
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
         vm.label(address(BAL), "BalToken");
@@ -54,6 +62,7 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
 
     function testUsdcAmountCap() public {
         assertEq(oneWayBondingCurve.usdcAmountCap(), USDC_AMOUNT_CAP);
+        assertLe(USDC_AMOUNT_CAP, USDC.balanceOf(AAVE_MAINNET_RESERVE_FACTOR));
     }
 
     function testGetBondingCurvePriceMultiplier() public {
@@ -74,7 +83,7 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
 
     function testGetOraclePriceAtMultipleIntervals() public {
         for (uint256 i = 0; i < 5000; i++) {
-            vm.roll(block.number + i);
+            vm.roll(block.number + 5);
             (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
             assertEq(
                 oneWayBondingCurve.getOraclePrice(),
@@ -102,8 +111,8 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
 
     function testPurchaseHitUSDCCeiling() public {
         vm.startPrank(BAL_WHALE);
-        BAL.approve(address(oneWayBondingCurve), 40000e18);
-        oneWayBondingCurve.purchase(40000e18);
+        BAL.approve(address(oneWayBondingCurve), 95000e18);
+        oneWayBondingCurve.purchase(95000e18);
 
         assertLe(oneWayBondingCurve.totalUsdcPurchased(), oneWayBondingCurve.usdcAmountCap());
         assertLe(oneWayBondingCurve.totalUsdcPurchased(), USDC_AMOUNT_CAP);
@@ -175,8 +184,8 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     }
 
     function testPurchaseFuzz(uint256 amount) public {
-        // Assuming upper bound of purchase of ~50000 BAL
-        vm.assume(amount > 0 && amount <= 50000e18);
+        // Assuming upper bound of purchase of ~100100 BAL
+        vm.assume(amount > 0 && amount <= 100100e18);
 
         vm.startPrank(BAL_WHALE);
         BAL.approve(address(oneWayBondingCurve), amount);
