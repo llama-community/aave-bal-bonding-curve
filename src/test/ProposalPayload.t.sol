@@ -81,9 +81,9 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
     }
 
     function testExecute() public {
-        // uint256 initialAaveMainnetReserveFactorAusdcBalance = IERC20(ausdcTokenAddress).balanceOf(
-        //     aaveMainnetReserveFactor
-        // );
+        uint256 initialAaveMainnetReserveFactorAusdcBalance = IERC20(ausdcTokenAddress).balanceOf(
+            aaveMainnetReserveFactor
+        );
         uint256 initialAaveMainnetReserveFactorUsdcBalance = IERC20(usdcTokenAddress).balanceOf(
             aaveMainnetReserveFactor
         );
@@ -94,11 +94,13 @@ contract ProposalPayloadTest is DSTestPlus, stdCheats {
 
         _executeProposal();
 
-        // TO DO: Check why the aUSDC balance assetion is failing
-        // assertEq(
-        //     IERC20(ausdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
-        //     initialAaveMainnetReserveFactorAusdcBalance - ausdcAmount
-        // );
+        // AAVE Mainnet Reserve Factor gets some additional aTokens minted to it while redeeming
+        // https://github.com/aave/protocol-v2/blob/baeb455fad42d3160d571bd8d3a795948b72dd85/contracts/protocol/libraries/logic/ReserveLogic.sol#L265-L325
+        assertGe(
+            IERC20(ausdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
+            initialAaveMainnetReserveFactorAusdcBalance - ausdcAmount
+        );
+
         assertEq(
             IERC20(usdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
             initialAaveMainnetReserveFactorUsdcBalance + ausdcAmount
