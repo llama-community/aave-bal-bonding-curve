@@ -124,8 +124,10 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     }
 
     function testGetOraclePriceAtMultipleIntervals() public {
+        // Testing for around 50000 blocks
+        // BAL/USD Chainlink price feed updates every 24 hours ~= 6500 blocks
         for (uint256 i = 0; i < 5000; i++) {
-            vm.roll(block.number + 5);
+            vm.roll(block.number + 10);
             (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
             assertEq(
                 oneWayBondingCurve.getOraclePrice(),
