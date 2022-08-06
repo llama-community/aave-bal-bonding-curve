@@ -1,29 +1,16 @@
-# AAVE Governance Forge Template
+# AAVE <> Balancer Bonding Curve
 
-A template for creating AAVE governance Proposal payload contracts.
+This repository contains the One Way Bonding Curve contract for crowdsourcing ~100,000 BAL tokens for Aave and the Proposal Payload for Aave Governance.
 
 ## Installation
 
 It requires [Foundry](https://github.com/gakonst/foundry) installed to run. You can find instructions here [Foundry installation](https://github.com/gakonst/foundry#installation).
 
-### GitHub template
-
-It's easiest to start a new project by clicking the ["Use this template"](https://github.com/llama-community/aave-governance-forge-template).
-
-Then clone the templated repository locally and `cd` into it and run the following commands:
+To set up the project manually, run the following commands:
 
 ```sh
-$ npm install
-$ forge install
-```
-
-### Manual installation
-
-If you want to create your project manually, run the following commands:
-
-```sh
-$ forge init --template https://github.com/llama-community/aave-governance-forge-template <my-repo>
-$ cd <my-repo>
+$ git clone https://github.com/llama-community/aave-bal-bonding-curve.git
+$ cd aave-bal-bonding-curve/
 $ npm install
 $ forge install
 ```
@@ -48,6 +35,3 @@ Duplicate `.env.example` and rename to `.env`:
 - `Testnet`: When you're ready to deploy and verify, run `./scripts/deploy_verify_testnet.sh` and follow the prompts.
 
 To confirm the deploy was successful, re-run your test suite but use the newly created contract address.
-
-## Acknowledgements
-* [Steven Valeri](https://github.com/stevenvaleri/): Re-wrote AAVE's governance process tests in solidity.
