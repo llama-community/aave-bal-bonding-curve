@@ -2,22 +2,16 @@
 pragma solidity ^0.8.15;
 
 // testing libraries
-import "@ds/test.sol";
-import "@std/console.sol";
-import {stdCheats} from "@std/stdlib.sol";
-import {Vm} from "@std/Vm.sol";
-import {DSTestPlus} from "@solmate/test/utils/DSTestPlus.sol";
+import "@forge-std/Test.sol";
 
 // contract dependencies
-import "../OneWayBondingCurve.sol";
+import {OneWayBondingCurve} from "../OneWayBondingCurve.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "../external/AggregatorV3Interface.sol";
 import {ILendingPool} from "../external/aave/ILendingPool.sol";
 
-contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
+contract OneWayBondingCurveTest is Test {
     event Purchase(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
-
-    Vm private vm = Vm(HEVM_ADDRESS);
 
     address public constant AAVE_MAINNET_RESERVE_FACTOR = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
     uint256 public constant BASIS_POINTS_GRANULARITY = 10_000;
@@ -41,6 +35,7 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
     address public constant BAL_WHALE = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
 
     function setUp() public {
+        vm.createSelectFork(vm.rpcUrl("mainnet"), 15227480);
         oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
 
         vm.startPrank(AAVE_MAINNET_RESERVE_FACTOR);
@@ -50,10 +45,6 @@ contract OneWayBondingCurveTest is DSTestPlus, stdCheats {
         vm.stopPrank();
 
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
-        vm.label(address(BAL), "BalToken");
-        vm.label(address(USDC), "UsdcToken");
-        vm.label(address(BAL_USD_FEED), "BalUsdChainlinkFeed");
-        vm.label(AAVE_MAINNET_RESERVE_FACTOR, "AAVE_MAINNET_RESERVE_FACTOR");
     }
 
     function testApprovalBondingCurve() public {

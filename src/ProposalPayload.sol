@@ -5,9 +5,13 @@ import {OneWayBondingCurve} from "./OneWayBondingCurve.sol";
 import {IEcosystemReserveController} from "./external/aave/IEcosystemReserveController.sol";
 import {ILendingPool} from "./external/aave/ILendingPool.sol";
 
-/// @title Payload to approve the One Way Bonding Curve to spend predetermined USDC amount
-/// @author Llama
-/// @notice Provides an execute function for Aave governance to execute
+/**
+ * @title Payload to approve the One Way Bonding Curve to spend predetermined USDC amount
+ * @author Llama
+ * @notice Provides an execute function for Aave governance to execute
+ * Governance Forum Post:
+ * Snapshot:
+ */
 contract ProposalPayload {
     /********************************
      *   CONSTANTS AND IMMUTABLES   *

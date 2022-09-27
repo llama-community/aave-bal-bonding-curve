@@ -19,8 +19,8 @@ $ forge install
 
 Duplicate `.env.example` and rename to `.env`:
 
-- Add a valid mainnet URL for an Ethereum JSON-RPC client for the `RPC_URL` variable.
-- Keep the same mainnet block number (i.e `15227480`) for the `BLOCK_NUMBER` variable (Certain tests depend on that block number).
+- Add a valid mainnet URL for an Ethereum JSON-RPC client for the `RPC_MAINNET_URL` variable.
+- Add a valid Private Key for the `PRIVATE_KEY` variable.
 - Add a valid Etherscan API Key for the `ETHERSCAN_API_KEY` variable.
 
 ### Commands
@@ -31,7 +31,7 @@ Duplicate `.env.example` and rename to `.env`:
 
 ### Deploy and Verify
 
-- `Mainnet`: When you're ready to deploy and verify, run `./scripts/deploy_verify_mainnet.sh` and follow the prompts.
-- `Testnet`: When you're ready to deploy and verify, run `./scripts/deploy_verify_testnet.sh` and follow the prompts.
+- `make deploy-contracts` - deploy and verify contracts on mainnet
+- `make deploy-proposal`- deploy proposal on mainnet
 
 To confirm the deploy was successful, re-run your test suite but use the newly created contract address.
