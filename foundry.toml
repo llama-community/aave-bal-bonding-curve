@@ -3,7 +3,7 @@
 # See more config options at: https://github.com/gakonst/foundry/tree/master/config
 
 # The Default Profile
-[default]
+[profile.default]
 # Sets the concrete solc version to use
 # This overrides the `auto_detect_solc` value
 solc_version = '0.8.15'
@@ -15,10 +15,10 @@ optimizer_runs = 1_000
 fuzz_runs = 1_000
 
 # Extreme Fuzzing CI Profile
-[ci]
+[profile.ci]
 fuzz_runs = 5_000
 
 # Profile For Deployments
-[deploy]
+[profile.deploy]
 optimizer = true
 optimizer_runs = 1_000_000
