@@ -22,3 +22,7 @@ fuzz_runs = 5_000
 [profile.deploy]
 optimizer = true
 optimizer_runs = 1_000_000
+
+# RPC Endpoints
+[rpc_endpoints]
+mainnet = "${RPC_MAINNET_URL}"
