@@ -6,7 +6,7 @@ import {Script} from "@forge-std/Script.sol";
 import {OneWayBondingCurve} from "../src/OneWayBondingCurve.sol";
 import {ProposalPayload} from "../src/ProposalPayload.sol";
 
-contract DeployProposalPayload is Script {
+contract DeployContracts is Script {
     uint256 private constant usdcAmount = 603000e6;
     uint256 private constant ausdcAmount = 250000e6;
 
