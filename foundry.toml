@@ -1,6 +1,5 @@
 # Foundry Configuration File
-# Default definitions: https://github.com/gakonst/foundry/blob/b7917fa8491aedda4dd6db53fbb206ea233cd531/config/src/lib.rs#L782
-# See more config options at: https://github.com/gakonst/foundry/tree/master/config
+# See more config options at: https://github.com/foundry-rs/foundry/tree/master/config
 
 # The Default Profile
 [profile.default]
@@ -13,6 +12,11 @@ optimizer = true
 optimizer_runs = 1_000
 # Fuzz more than the default 256
 fuzz_runs = 1_000
+# Path defaults
+libs = ['lib']
+src = 'src'
+test = 'test'
+out = 'out'
 
 # Extreme Fuzzing CI Profile
 [profile.ci]
