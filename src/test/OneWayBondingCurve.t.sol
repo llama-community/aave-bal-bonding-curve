@@ -8,12 +8,12 @@ import "@forge-std/Test.sol";
 import {OneWayBondingCurve} from "../OneWayBondingCurve.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {AggregatorV3Interface} from "../external/AggregatorV3Interface.sol";
-import {ILendingPool} from "../external/aave/ILendingPool.sol";
+import {AaveV2Ethereum} from "@aave-address-book/AaveV2Ethereum.sol";
 
 contract OneWayBondingCurveTest is Test {
     event Purchase(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
 
-    address public constant AAVE_MAINNET_RESERVE_FACTOR = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
+    address public immutable AAVE_MAINNET_RESERVE_FACTOR = AaveV2Ethereum.COLLECTOR;
     uint256 public constant BASIS_POINTS_GRANULARITY = 10_000;
     uint256 public constant BASIS_POINTS_ARBITRAGE_INCENTIVE = 50;
 
@@ -21,7 +21,6 @@ contract OneWayBondingCurveTest is Test {
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
-    ILendingPool public constant AAVE_LENDING_POOL = ILendingPool(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
 
     uint256 public constant USDC_BASE = 10**6;
     uint256 public constant BAL_BASE = 10**18;
@@ -39,7 +38,7 @@ contract OneWayBondingCurveTest is Test {
         oneWayBondingCurve = new OneWayBondingCurve(USDC_AMOUNT_CAP);
 
         vm.startPrank(AAVE_MAINNET_RESERVE_FACTOR);
-        AAVE_LENDING_POOL.withdraw(address(USDC), AUSDC_AMOUNT, AAVE_MAINNET_RESERVE_FACTOR);
+        AaveV2Ethereum.POOL.withdraw(address(USDC), AUSDC_AMOUNT, AAVE_MAINNET_RESERVE_FACTOR);
         // Now Aave Mainnet Reserve Factor will have enough USDC to meet USDC_AMOUNT_CAP
         USDC.approve(address(oneWayBondingCurve), USDC_AMOUNT_CAP);
         vm.stopPrank();

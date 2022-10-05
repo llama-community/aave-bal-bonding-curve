@@ -10,6 +10,7 @@ import {ProposalPayload} from "../ProposalPayload.sol";
 import {OneWayBondingCurve} from "../OneWayBondingCurve.sol";
 import {DeployMainnetProposal} from "../../script/DeployMainnetProposal.s.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
+import {AaveV2Ethereum} from "@aave-address-book/AaveV2Ethereum.sol";
 
 contract ProposalPayloadTest is Test {
     address public constant AAVE_WHALE = 0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8;
@@ -21,7 +22,7 @@ contract ProposalPayloadTest is Test {
     uint256 public constant usdcAmount = 603000e6;
     uint256 public constant ausdcAmount = 250000e6;
 
-    address public constant aaveMainnetReserveFactor = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
+    address public immutable aaveMainnetReserveFactor = AaveV2Ethereum.COLLECTOR;
 
     OneWayBondingCurve public oneWayBondingCurve;
     ProposalPayload public proposalPayload;

@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
 import {AggregatorV3Interface} from "./external/AggregatorV3Interface.sol";
 import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
+import {AaveV2Ethereum} from "@aave-address-book/AaveV2Ethereum.sol";
 
 /// @title OneWayBondingCurve
 /// @author Llama
@@ -16,7 +17,6 @@ contract OneWayBondingCurve {
      *   CONSTANTS AND IMMUTABLES   *
      ********************************/
 
-    address public constant AAVE_MAINNET_RESERVE_FACTOR = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
     uint256 public constant BASIS_POINTS_GRANULARITY = 10_000;
     uint256 public constant BASIS_POINTS_ARBITRAGE_INCENTIVE = 50;
 
@@ -81,8 +81,8 @@ contract OneWayBondingCurve {
         totalBalReceived += amountIn;
 
         // Execute the purchase
-        BAL.safeTransferFrom(msg.sender, AAVE_MAINNET_RESERVE_FACTOR, amountIn);
-        USDC.safeTransferFrom(AAVE_MAINNET_RESERVE_FACTOR, msg.sender, amountOut);
+        BAL.safeTransferFrom(msg.sender, AaveV2Ethereum.COLLECTOR, amountIn);
+        USDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, msg.sender, amountOut);
 
         emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
     }

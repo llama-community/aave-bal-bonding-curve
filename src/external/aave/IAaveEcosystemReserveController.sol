@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.15;
 
-interface IEcosystemReserveController {
+interface IAaveEcosystemReserveController {
     /**
      * @notice Proxy function for ERC20's approve(), pointing to a specific collector contract
      * @param collector The collector contract with funds (Aave ecosystem reserve)
