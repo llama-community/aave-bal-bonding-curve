@@ -9,8 +9,8 @@ import {AaveV2Ethereum} from "@aave-address-book/AaveV2Ethereum.sol";
  * @title Payload to approve the One Way Bonding Curve to spend predetermined USDC amount
  * @author Llama
  * @notice Provides an execute function for Aave governance to execute
- * Governance Forum Post:
- * Snapshot:
+ * Governance Forum Post: https://governance.aave.com/t/arc-strategic-partnership-with-balancer-part-2/7813
+ * Snapshot: https://snapshot.org/#/aave.eth/proposal/QmVqWgpRmoEvvhvXZFepmAgYU5ZK9XpSs39MExEUpiJZw3
  */
 contract ProposalPayload {
     /********************************
