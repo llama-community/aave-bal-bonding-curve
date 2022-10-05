@@ -1,3 +1,5 @@
 @forge-std=lib/forge-std/src/
 @openzeppelin=lib/openzeppelin-contracts/contracts/
 @solmate=lib/solmate/src/
+@aave-address-book=lib/aave-address-book/src/
+@aave-helpers=lib/aave-helpers/src/
