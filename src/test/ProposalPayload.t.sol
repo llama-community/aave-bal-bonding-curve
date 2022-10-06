@@ -19,8 +19,7 @@ contract ProposalPayloadTest is Test {
 
     address public constant usdcTokenAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant ausdcTokenAddress = 0xBcca60bB61934080951369a648Fb03DF4F96263C;
-    uint256 public constant usdcAmount = 603000e6;
-    uint256 public constant ausdcAmount = 250000e6;
+    uint256 public constant ausdcAmount = 603000e6;
 
     address public immutable aaveMainnetReserveFactor = AaveV2Ethereum.COLLECTOR;
 
@@ -28,13 +27,13 @@ contract ProposalPayloadTest is Test {
     ProposalPayload public proposalPayload;
 
     function setUp() public {
-        vm.createSelectFork(vm.rpcUrl("mainnet"), 15227480);
+        vm.createSelectFork(vm.rpcUrl("mainnet"), 15690548);
 
         // Deploying One Way Bonding Curve
-        oneWayBondingCurve = new OneWayBondingCurve(usdcAmount);
+        oneWayBondingCurve = new OneWayBondingCurve(ausdcAmount);
 
         // Deploy Payload
-        proposalPayload = new ProposalPayload(oneWayBondingCurve, usdcAmount, ausdcAmount);
+        proposalPayload = new ProposalPayload(oneWayBondingCurve, ausdcAmount);
 
         // Create Proposal
         vm.prank(AAVE_WHALE);
@@ -55,8 +54,9 @@ contract ProposalPayloadTest is Test {
             aaveMainnetReserveFactor
         );
 
-        assertEq(IERC20(usdcTokenAddress).balanceOf(address(proposalPayload)), 0);
         assertEq(IERC20(ausdcTokenAddress).balanceOf(address(proposalPayload)), 0);
+        assertEq(IERC20(usdcTokenAddress).balanceOf(address(proposalPayload)), 0);
+        assertEq(IERC20(ausdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), 0);
         assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), 0);
 
         // Pass vote and execute proposal
@@ -66,15 +66,15 @@ contract ProposalPayloadTest is Test {
         // https://github.com/aave/protocol-v2/blob/baeb455fad42d3160d571bd8d3a795948b72dd85/contracts/protocol/libraries/logic/ReserveLogic.sol#L265-L325
         assertGe(
             IERC20(ausdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
-            initialAaveMainnetReserveFactorAusdcBalance - ausdcAmount
+            initialAaveMainnetReserveFactorAusdcBalance + initialAaveMainnetReserveFactorUsdcBalance
         );
-
-        assertEq(
-            IERC20(usdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
-            initialAaveMainnetReserveFactorUsdcBalance + ausdcAmount
-        );
-        assertEq(IERC20(usdcTokenAddress).balanceOf(address(proposalPayload)), 0);
+        assertEq(IERC20(usdcTokenAddress).balanceOf(aaveMainnetReserveFactor), 0);
         assertEq(IERC20(ausdcTokenAddress).balanceOf(address(proposalPayload)), 0);
-        assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), usdcAmount);
+        assertEq(IERC20(usdcTokenAddress).balanceOf(address(proposalPayload)), 0);
+        assertEq(
+            IERC20(ausdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)),
+            ausdcAmount
+        );
+        assertEq(IERC20(usdcTokenAddress).allowance(aaveMainnetReserveFactor, address(oneWayBondingCurve)), 0);
     }
 }
