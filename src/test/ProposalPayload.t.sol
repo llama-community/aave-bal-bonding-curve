@@ -62,7 +62,7 @@ contract ProposalPayloadTest is Test {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
-        // AAVE Mainnet Reserve Factor gets some additional aTokens minted to it while redeeming
+        // AAVE Mainnet Reserve Factor gets some additional aTokens minted to it while depositing/withdrawing
         // https://github.com/aave/protocol-v2/blob/baeb455fad42d3160d571bd8d3a795948b72dd85/contracts/protocol/libraries/logic/ReserveLogic.sol#L265-L325
         assertGe(
             IERC20(ausdcTokenAddress).balanceOf(aaveMainnetReserveFactor),
