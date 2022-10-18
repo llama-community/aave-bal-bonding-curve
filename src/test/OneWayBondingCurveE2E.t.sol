@@ -14,6 +14,8 @@ import {AaveV2Ethereum} from "@aave-address-book/AaveV2Ethereum.sol";
 import {AggregatorV3Interface} from "../external/AggregatorV3Interface.sol";
 
 contract OneWayBondingCurveE2ETest is Test {
+    event Purchase(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
+
     address public constant AAVE_WHALE = 0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8;
     address public constant BAL_WHALE = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
 
@@ -33,7 +35,7 @@ contract OneWayBondingCurveE2ETest is Test {
 
     // USD equivalent of ~100,000 BAL with 50bps incentive
     uint256 public constant AUSDC_AMOUNT = 603000e6;
-    // uint256 public constant BAL_AMOUNT_IN = 10000e18;
+    uint256 public constant BAL_AMOUNT_IN = 10000e18;
 
     OneWayBondingCurve public oneWayBondingCurve;
     ProposalPayload public proposalPayload;
@@ -58,7 +60,7 @@ contract OneWayBondingCurveE2ETest is Test {
         vm.label(address(proposalPayload), "ProposalPayload");
     }
 
-    function testExecute() public {
+    function testExecuteProposal() public {
         uint256 initialAaveMainnetReserveFactorAusdcBalance = AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR);
         uint256 initialAaveMainnetReserveFactorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
 
@@ -81,5 +83,41 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(USDC.balanceOf(address(proposalPayload)), 0);
         assertEq(AUSDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), AUSDC_AMOUNT);
         assertEq(USDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), 0);
+    }
+
+    function testAusdcAmount() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+        assertLe(AUSDC_AMOUNT, AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR));
+    }
+
+    function testPurchase() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
+
+        uint256 initialAaveMainnetReserveFactorAusdcBalance = AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialAaveMainnetReserveFactorBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialPurchaserUsdcBalance = USDC.balanceOf(BAL_WHALE);
+        uint256 initialPurchaserBalBalance = BAL.balanceOf(BAL_WHALE);
+
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
+        assertEq(oneWayBondingCurve.totalBalReceived(), 0);
+
+        vm.expectEmit(true, true, false, true);
+        emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 54531300000);
+        uint256 usdcAmountOut = oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
+
+        assertEq(
+            AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR),
+            initialAaveMainnetReserveFactorAusdcBalance - usdcAmountOut
+        );
+        assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialAaveMainnetReserveFactorBalBalance + BAL_AMOUNT_IN);
+        assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
+        assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaserBalBalance - BAL_AMOUNT_IN);
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
+        assertEq(oneWayBondingCurve.totalBalReceived(), BAL_AMOUNT_IN);
     }
 }
