@@ -91,6 +91,11 @@ contract OneWayBondingCurveE2ETest is Test {
         assertLe(AUSDC_AMOUNT, AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR));
     }
 
+    function testPurchaseZeroAmount() public {
+        vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
+        oneWayBondingCurve.purchase(0);
+    }
+
     function testPurchase() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
