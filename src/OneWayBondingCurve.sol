@@ -9,7 +9,7 @@ import {AaveV2Ethereum} from "@aave-address-book/AaveV2Ethereum.sol";
 
 /// @title OneWayBondingCurve
 /// @author Llama
-/// @notice One Way Bonding Curve to purchase discounted USDC for BAL upto a USDC Ceiling
+/// @notice One Way Bonding Curve to purchase discounted USDC for BAL upto a 100k BAL Ceiling
 contract OneWayBondingCurve {
     using SafeERC20 for IERC20;
 
@@ -17,19 +17,19 @@ contract OneWayBondingCurve {
      *   CONSTANTS AND IMMUTABLES   *
      ********************************/
 
+    uint256 public constant BAL_AMOUNT_CAP = 100_000e18;
+
     uint256 public constant BASIS_POINTS_GRANULARITY = 10_000;
     uint256 public constant BASIS_POINTS_ARBITRAGE_INCENTIVE = 50;
 
     IERC20 public constant BAL = IERC20(0xba100000625a3754423978a60c9317c58a424e3D);
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    IERC20 public constant AUSDC = IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C);
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
 
     uint256 public constant USDC_BASE = 10**6;
     uint256 public constant BAL_BASE = 10**18;
-
-    /// @notice USDC Cap that has been approved by AAVE Governance
-    uint256 public immutable usdcAmountCap;
 
     /*************************
      *   STORAGE VARIABLES   *
@@ -52,16 +52,8 @@ contract OneWayBondingCurve {
      ****************************/
 
     error OnlyNonZeroAmount();
-    error NotEnoughUsdcToPurchase();
+    error ExcessBalAmountIn();
     error InvalidOracleAnswer();
-
-    /*******************
-     *   CONSTRUCTOR   *
-     *******************/
-
-    constructor(uint256 _usdcAmountCap) {
-        usdcAmountCap = _usdcAmountCap;
-    }
 
     /*****************
      *   FUNCTIONS   *
@@ -73,23 +65,23 @@ contract OneWayBondingCurve {
     /// @dev Purchaser has to approve BAL transfer before calling this function
     function purchase(uint256 amountIn) external returns (uint256 amountOut) {
         if (amountIn == 0) revert OnlyNonZeroAmount();
+        if (amountIn > availableBalToBeFilled()) revert ExcessBalAmountIn();
 
-        amountOut = getAmountOut(amountIn);
-        if (amountOut > availableUsdcToPurchase()) revert NotEnoughUsdcToPurchase();
-
-        totalUsdcPurchased += amountOut;
         totalBalReceived += amountIn;
+        amountOut = getAmountOut(amountIn);
+        totalUsdcPurchased += amountOut;
 
         // Execute the purchase
         BAL.safeTransferFrom(msg.sender, AaveV2Ethereum.COLLECTOR, amountIn);
-        USDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, msg.sender, amountOut);
+        AUSDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), amountOut);
+        AaveV2Ethereum.POOL.withdraw(address(USDC), amountOut, msg.sender);
 
         emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
     }
 
-    /// @notice Returns how close to the USDC amount cap we are
-    function availableUsdcToPurchase() public view returns (uint256) {
-        return usdcAmountCap - totalUsdcPurchased;
+    /// @notice Returns how close to the BAL amount cap we are
+    function availableBalToBeFilled() public view returns (uint256) {
+        return BAL_AMOUNT_CAP - totalBalReceived;
     }
 
     /// @notice Returns amount of USDC that will be received after a bonding curve purchase of BAL

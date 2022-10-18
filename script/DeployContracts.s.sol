@@ -11,7 +11,7 @@ contract DeployContracts is Script {
 
     function run() external {
         vm.startBroadcast();
-        OneWayBondingCurve oneWayBondingCurve = new OneWayBondingCurve(ausdcAmount);
+        OneWayBondingCurve oneWayBondingCurve = new OneWayBondingCurve();
         console.log("One Way Bonding Curve address", address(oneWayBondingCurve));
         ProposalPayload proposalPayload = new ProposalPayload(oneWayBondingCurve, ausdcAmount);
         console.log("Proposal Payload address", address(proposalPayload));

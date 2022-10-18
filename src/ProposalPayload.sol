@@ -39,23 +39,18 @@ contract ProposalPayload {
 
     /// @notice The AAVE governance executor calls this function to implement the proposal.
     function execute() external {
-        // Transfer all existing USDC tokens to this Proposal Payload contract from AAVE V2 Collector
+        // 1. Convert all existing USDC in AAVE V2 Collector to aUSDC to generate yield
         IAaveEcosystemReserveController(AaveV2Ethereum.COLLECTOR_CONTROLLER).transfer(
             AaveV2Ethereum.COLLECTOR,
             USDC_TOKEN,
             address(this),
             IERC20(USDC_TOKEN).balanceOf(AaveV2Ethereum.COLLECTOR)
         );
-
         uint256 usdcBalance = IERC20(USDC_TOKEN).balanceOf(address(this));
-
-        // Approving transfer of all available USDC in Proposal Payload contract
         IERC20(USDC_TOKEN).approve(address(AaveV2Ethereum.POOL), usdcBalance);
-
-        // Depositing all available USDC on behalf of AAVE V2 Collector to generate yield
         AaveV2Ethereum.POOL.deposit(USDC_TOKEN, usdcBalance, AaveV2Ethereum.COLLECTOR, 0);
 
-        // Approve the One Way Bonding Curve contract to spend pre-defined amount of aUSDC tokens from AAVE V2 Collector
+        // 2. Approve the One Way Bonding Curve contract to spend pre-defined amount of aUSDC tokens from AAVE V2 Collector
         IAaveEcosystemReserveController(AaveV2Ethereum.COLLECTOR_CONTROLLER).approve(
             AaveV2Ethereum.COLLECTOR,
             AUSDC_TOKEN,
