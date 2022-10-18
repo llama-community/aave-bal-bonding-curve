@@ -96,6 +96,21 @@ contract OneWayBondingCurveE2ETest is Test {
         oneWayBondingCurve.purchase(0);
     }
 
+    function testPurchaseHitBalCeiling() public {
+        // totalBalReceived is storage slot 1
+        // Setting current totalBalReceived to 95k BAL
+        vm.store(address(oneWayBondingCurve), bytes32(uint256(1)), bytes32(uint256(95000e18)));
+
+        assertEq(oneWayBondingCurve.totalBalReceived(), 95000e18);
+        assertLe(oneWayBondingCurve.totalBalReceived(), oneWayBondingCurve.BAL_AMOUNT_CAP());
+
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
+        vm.expectRevert(OneWayBondingCurve.ExcessBalAmountIn.selector);
+        oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
+        vm.stopPrank();
+    }
+
     function testPurchase() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
