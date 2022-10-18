@@ -85,18 +85,29 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(USDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), 0);
     }
 
+    /************************************
+     *   POST PROPOSAL EXECUTION TESTS  *
+     ************************************/
+
     function testAusdcAmount() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
+
         assertLe(AUSDC_AMOUNT, AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR));
     }
 
     function testPurchaseZeroAmount() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
         vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
         oneWayBondingCurve.purchase(0);
     }
 
     function testPurchaseHitBalCeiling() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
         // totalBalReceived is storage slot 1
         // Setting current totalBalReceived to 95k BAL
         vm.store(address(oneWayBondingCurve), bytes32(uint256(1)), bytes32(uint256(95000e18)));
