@@ -155,7 +155,18 @@ contract OneWayBondingCurveE2ETest is Test {
         oneWayBondingCurve.purchase(oneWayBondingCurve.BAL_AMOUNT_CAP());
         vm.stopPrank();
 
+        uint256 initialRemainingCollectorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialRemainingUsdcAllowance = USDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve));
+        uint256 usdcAmount = (initialRemainingUsdcAllowance <= initialRemainingCollectorUsdcBalance)
+            ? initialRemainingUsdcAllowance
+            : initialRemainingCollectorUsdcBalance;
+
+        uint256 initialRemainingCollectorAusdcBalance = AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR);
+
         oneWayBondingCurve.depositRemainingUsdcInCollector();
+
+        assertEq(USDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialRemainingCollectorUsdcBalance - usdcAmount);
+        assertGe(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialRemainingCollectorAusdcBalance + usdcAmount);
     }
 
     /*****************************************
