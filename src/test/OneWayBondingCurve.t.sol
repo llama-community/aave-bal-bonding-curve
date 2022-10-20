@@ -39,15 +39,6 @@ contract OneWayBondingCurveTest is Test {
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
     }
 
-    // function testApprovalBondingCurve() public {
-    //     assertEq(USDC.allowance(AAVE_MAINNET_RESERVE_FACTOR, address(oneWayBondingCurve)), USDC_AMOUNT_CAP);
-    // }
-
-    // function testUsdcAmountCap() public {
-    //     assertEq(oneWayBondingCurve.usdcAmountCap(), USDC_AMOUNT_CAP);
-    //     assertLe(USDC_AMOUNT_CAP, USDC.balanceOf(AAVE_MAINNET_RESERVE_FACTOR));
-    // }
-
     // function testGetBondingCurvePriceMultiplier() public {
     //     assertEq(
     //         oneWayBondingCurve.getBondingCurvePriceMultiplier(),

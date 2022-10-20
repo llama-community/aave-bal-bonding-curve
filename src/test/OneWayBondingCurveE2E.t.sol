@@ -86,38 +86,38 @@ contract OneWayBondingCurveE2ETest is Test {
     //  *   POST PROPOSAL EXECUTION TESTS  *
     //  ************************************/
 
-    // function testAusdcAmount() public {
-    //     // Pass vote and execute proposal
-    //     GovHelpers.passVoteAndExecute(vm, proposalId);
+    function testUsdcAmount() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
 
-    //     assertLe(AUSDC_AMOUNT, AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR));
-    // }
+        assertLe(USDC_AMOUNT, USDC.balanceOf(AaveV2Ethereum.COLLECTOR));
+    }
 
-    // function testPurchaseZeroAmount() public {
-    //     // Pass vote and execute proposal
-    //     GovHelpers.passVoteAndExecute(vm, proposalId);
+    function testPurchaseZeroAmount() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
 
-    //     vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
-    //     oneWayBondingCurve.purchase(0);
-    // }
+        vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
+        oneWayBondingCurve.purchase(0);
+    }
 
-    // function testPurchaseHitBalCeiling() public {
-    //     // Pass vote and execute proposal
-    //     GovHelpers.passVoteAndExecute(vm, proposalId);
+    function testPurchaseHitBalCeiling() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
 
-    //     // totalBalReceived is storage slot 1
-    //     // Setting current totalBalReceived to 95k BAL
-    //     vm.store(address(oneWayBondingCurve), bytes32(uint256(1)), bytes32(uint256(95000e18)));
+        // totalBalReceived is storage slot 1
+        // Setting current totalBalReceived to 95k BAL
+        vm.store(address(oneWayBondingCurve), bytes32(uint256(1)), bytes32(uint256(95_000e18)));
 
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), 95000e18);
-    //     assertLe(oneWayBondingCurve.totalBalReceived(), oneWayBondingCurve.BAL_AMOUNT_CAP());
+        assertEq(oneWayBondingCurve.totalBalReceived(), 95000e18);
+        assertLe(oneWayBondingCurve.totalBalReceived(), oneWayBondingCurve.BAL_AMOUNT_CAP());
 
-    //     vm.startPrank(BAL_WHALE);
-    //     BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
-    //     vm.expectRevert(OneWayBondingCurve.ExcessBalAmountIn.selector);
-    //     oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
-    //     vm.stopPrank();
-    // }
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
+        vm.expectRevert(OneWayBondingCurve.ExcessBalAmountIn.selector);
+        oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
+        vm.stopPrank();
+    }
 
     // function testPurchase() public {
     //     // Pass vote and execute proposal
