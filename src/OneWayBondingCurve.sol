@@ -24,6 +24,7 @@ contract OneWayBondingCurve {
 
     IERC20 public constant BAL = IERC20(0xba100000625a3754423978a60c9317c58a424e3D);
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    IERC20 public constant AUSDC = IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C);
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
 
@@ -48,6 +49,7 @@ contract OneWayBondingCurve {
      **************/
 
     event Purchase(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
+    event Deposit(address indexed token, address indexed aToken, uint256 amount);
 
     /****************************
      *   ERRORS AND MODIFIERS   *
@@ -58,7 +60,6 @@ contract OneWayBondingCurve {
     error BalCapNotFilled();
     error ZeroUsdcAllowance();
     error ZeroUsdcBalanceCollector();
-    error DepositAlreadyOccured();
     error InvalidOracleAnswer();
 
     /*****************
@@ -99,15 +100,15 @@ contract OneWayBondingCurve {
         if (totalBalReceived < BAL_AMOUNT_CAP) revert BalCapNotFilled();
         if (usdcAllowance == 0) revert ZeroUsdcAllowance();
         if (collectorUsdcBalance == 0) revert ZeroUsdcBalanceCollector();
-        if (hasDepositOccured) revert DepositAlreadyOccured();
 
-        hasDepositOccured = true;
         // USDC available to Bonding Curve to spend on behalf of Aave V2 Collector
         uint256 usdcAmount = (usdcAllowance <= collectorUsdcBalance) ? usdcAllowance : collectorUsdcBalance;
 
         USDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), usdcAmount);
         USDC.approve(address(AaveV2Ethereum.POOL), usdcAmount);
         AaveV2Ethereum.POOL.deposit(address(USDC), usdcAmount, AaveV2Ethereum.COLLECTOR, 0);
+
+        emit Deposit(address(USDC), address(AUSDC), usdcAmount);
     }
 
     /// @notice Returns amount of USDC that will be received after a bonding curve purchase of BAL

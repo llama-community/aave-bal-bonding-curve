@@ -15,6 +15,7 @@ import {AggregatorV3Interface} from "../external/AggregatorV3Interface.sol";
 
 contract OneWayBondingCurveE2ETest is Test {
     event Purchase(address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut);
+    event Deposit(address indexed token, address indexed aToken, uint256 amount);
 
     address public constant AAVE_WHALE = 0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8;
     address public constant BAL_WHALE = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
@@ -163,6 +164,8 @@ contract OneWayBondingCurveE2ETest is Test {
 
         uint256 initialRemainingCollectorAusdcBalance = AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR);
 
+        vm.expectEmit(true, true, false, true);
+        emit Deposit(address(USDC), address(AUSDC), usdcAmount);
         oneWayBondingCurve.depositRemainingUsdcInCollector();
 
         assertEq(USDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialRemainingCollectorUsdcBalance - usdcAmount);
