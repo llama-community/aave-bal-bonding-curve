@@ -122,54 +122,6 @@ contract OneWayBondingCurveTest is Test {
     //     assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), 60050749950);
     // }
 
-    // function testPurchaseZeroAmount() public {
-    //     vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
-    //     oneWayBondingCurve.purchase(0);
-    // }
-
-    // function testPurchaseHitUSDCCeiling() public {
-    //     vm.startPrank(BAL_WHALE);
-    //     BAL.approve(address(oneWayBondingCurve), 95000e18);
-    //     oneWayBondingCurve.purchase(95000e18);
-
-    //     assertLe(oneWayBondingCurve.totalUsdcPurchased(), oneWayBondingCurve.usdcAmountCap());
-    //     assertLe(oneWayBondingCurve.totalUsdcPurchased(), USDC_AMOUNT_CAP);
-
-    //     BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
-    //     vm.expectRevert(OneWayBondingCurve.NotEnoughUsdcToPurchase.selector);
-    //     oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
-    // }
-
-    // function testPurchase() public {
-    //     vm.startPrank(BAL_WHALE);
-    //     BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
-
-    //     uint256 initialAaveMainnetReserverFactorUsdcBalance = USDC.balanceOf(AAVE_MAINNET_RESERVE_FACTOR);
-    //     uint256 initialAaveMainnetReserverFactorBalBalance = BAL.balanceOf(AAVE_MAINNET_RESERVE_FACTOR);
-    //     uint256 initialPurchaserUsdcBalance = USDC.balanceOf(BAL_WHALE);
-    //     uint256 initialPurchaseBalBalance = BAL.balanceOf(BAL_WHALE);
-
-    //     assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), 0);
-
-    //     vm.expectEmit(true, true, false, true);
-    //     emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 60050749950);
-    //     uint256 usdcAmountOut = oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
-
-    //     assertEq(
-    //         USDC.balanceOf(AAVE_MAINNET_RESERVE_FACTOR),
-    //         initialAaveMainnetReserverFactorUsdcBalance - usdcAmountOut
-    //     );
-    //     assertEq(
-    //         BAL.balanceOf(AAVE_MAINNET_RESERVE_FACTOR),
-    //         initialAaveMainnetReserverFactorBalBalance + BAL_AMOUNT_IN
-    //     );
-    //     assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
-    //     assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaseBalBalance - BAL_AMOUNT_IN);
-    //     assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), BAL_AMOUNT_IN);
-    // }
-
     // /*****************
     //  *   FUZZ TESTS  *
     //  *****************/
@@ -231,33 +183,5 @@ contract OneWayBondingCurveTest is Test {
     //     uint256 usdcValueOfAmountIn = (oneWayBondingCurve.getOraclePrice() * normalizedAmountIn) / USDC_BASE;
     //     uint256 amountOut = (oneWayBondingCurve.getBondingCurvePriceMultiplier() * usdcValueOfAmountIn) / USDC_BASE;
     //     assertEq(oneWayBondingCurve.getAmountOut(amount), amountOut);
-    // }
-
-    // function testPurchaseFuzz(uint256 amount) public {
-    //     // Assuming upper bound of purchase of ~100100 BAL
-    //     vm.assume(amount > 0 && amount <= 100100e18);
-
-    //     vm.startPrank(BAL_WHALE);
-    //     BAL.approve(address(oneWayBondingCurve), amount);
-
-    //     uint256 initialAaveMainnetReserverFactorUsdcBalance = USDC.balanceOf(AAVE_MAINNET_RESERVE_FACTOR);
-    //     uint256 initialAaveMainnetReserverFactorBalBalance = BAL.balanceOf(AAVE_MAINNET_RESERVE_FACTOR);
-    //     uint256 initialPurchaserUsdcBalance = USDC.balanceOf(BAL_WHALE);
-    //     uint256 initialPurchaseBalBalance = BAL.balanceOf(BAL_WHALE);
-
-    //     assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), 0);
-
-    //     uint256 usdcAmountOut = oneWayBondingCurve.purchase(amount);
-
-    //     assertEq(
-    //         USDC.balanceOf(AAVE_MAINNET_RESERVE_FACTOR),
-    //         initialAaveMainnetReserverFactorUsdcBalance - usdcAmountOut
-    //     );
-    //     assertEq(BAL.balanceOf(AAVE_MAINNET_RESERVE_FACTOR), initialAaveMainnetReserverFactorBalBalance + amount);
-    //     assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
-    //     assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaseBalBalance - amount);
-    //     assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), amount);
     // }
 }
