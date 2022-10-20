@@ -73,8 +73,7 @@ contract OneWayBondingCurve {
 
         // Execute the purchase
         BAL.safeTransferFrom(msg.sender, AaveV2Ethereum.COLLECTOR, amountIn);
-        AUSDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), amountOut);
-        AaveV2Ethereum.POOL.withdraw(address(USDC), amountOut, msg.sender);
+        USDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, msg.sender, amountOut);
 
         emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
     }

@@ -23,14 +23,20 @@ contract ProposalPayload {
 
     OneWayBondingCurve public immutable oneWayBondingCurve;
     uint256 public immutable ausdcAmount;
+    uint256 public immutable usdcAmount;
 
     /*******************
      *   CONSTRUCTOR   *
      *******************/
 
-    constructor(OneWayBondingCurve _oneWayBondingCurve, uint256 _ausdcAmount) {
+    constructor(
+        OneWayBondingCurve _oneWayBondingCurve,
+        uint256 _ausdcAmount,
+        uint256 _usdcAmount
+    ) {
         oneWayBondingCurve = _oneWayBondingCurve;
         ausdcAmount = _ausdcAmount;
+        usdcAmount = _usdcAmount;
     }
 
     /*****************
@@ -39,23 +45,23 @@ contract ProposalPayload {
 
     /// @notice The AAVE governance executor calls this function to implement the proposal.
     function execute() external {
-        // 1. Convert all existing USDC in AAVE V2 Collector to aUSDC to generate yield
+        // 1. Transfer pre-defined amount of aUSDC tokens to this Proposal Payload contract from AAVE V2 Collector
         IAaveEcosystemReserveController(AaveV2Ethereum.COLLECTOR_CONTROLLER).transfer(
             AaveV2Ethereum.COLLECTOR,
-            USDC_TOKEN,
+            AUSDC_TOKEN,
             address(this),
-            IERC20(USDC_TOKEN).balanceOf(AaveV2Ethereum.COLLECTOR)
+            ausdcAmount
         );
-        uint256 usdcBalance = IERC20(USDC_TOKEN).balanceOf(address(this));
-        IERC20(USDC_TOKEN).approve(address(AaveV2Ethereum.POOL), usdcBalance);
-        AaveV2Ethereum.POOL.deposit(USDC_TOKEN, usdcBalance, AaveV2Ethereum.COLLECTOR, 0);
 
-        // 2. Approve the One Way Bonding Curve contract to spend pre-defined amount of aUSDC tokens from AAVE V2 Collector
+        // 2. Redeem aUSDC tokens in this Proposal Payload contract for USDC tokens and send to AAVE V2 Collector
+        AaveV2Ethereum.POOL.withdraw(USDC_TOKEN, ausdcAmount, AaveV2Ethereum.COLLECTOR);
+
+        // 3. Approve the One Way Bonding Curve contract to spend pre-defined amount of USDC tokens from AAVE V2 Collector
         IAaveEcosystemReserveController(AaveV2Ethereum.COLLECTOR_CONTROLLER).approve(
             AaveV2Ethereum.COLLECTOR,
-            AUSDC_TOKEN,
+            USDC_TOKEN,
             address(oneWayBondingCurve),
-            ausdcAmount
+            usdcAmount
         );
     }
 }
