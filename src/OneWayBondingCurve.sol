@@ -40,6 +40,9 @@ contract OneWayBondingCurve {
     /// @notice Cumulative BAL Received
     uint256 public totalBalReceived;
 
+    /// @notice Flag to check if Remaining USDC in Collector has already been deposited
+    bool public hasDepositOccured;
+
     /**************
      *   EVENTS   *
      **************/
@@ -52,6 +55,10 @@ contract OneWayBondingCurve {
 
     error OnlyNonZeroAmount();
     error ExcessBalAmountIn();
+    error BalCapNotFilled();
+    error ZeroUsdcAllowance();
+    error ZeroUsdcBalanceCollector();
+    error DepositAlreadyOccured();
     error InvalidOracleAnswer();
 
     /*****************
@@ -82,6 +89,25 @@ contract OneWayBondingCurve {
     /// @notice Returns how close to the BAL amount cap we are
     function availableBalToBeFilled() public view returns (uint256) {
         return BAL_AMOUNT_CAP - totalBalReceived;
+    }
+
+    /// @notice Deposit Remaining USDC in Aave V2 Collector after BAL Cap has been filled
+    function depositRemainingUsdcInCollector() external {
+        uint256 collectorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 usdcAllowance = USDC.allowance(AaveV2Ethereum.COLLECTOR, address(this));
+
+        if (totalBalReceived < BAL_AMOUNT_CAP) revert BalCapNotFilled();
+        if (usdcAllowance == 0) revert ZeroUsdcAllowance();
+        if (collectorUsdcBalance == 0) revert ZeroUsdcBalanceCollector();
+        if (hasDepositOccured) revert DepositAlreadyOccured();
+
+        hasDepositOccured = true;
+        // USDC available to Bonding Curve to spend on behalf of Aave V2 Collector
+        uint256 usdcAmount = (usdcAllowance <= collectorUsdcBalance) ? usdcAllowance : collectorUsdcBalance;
+
+        USDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), usdcAmount);
+        USDC.approve(address(AaveV2Ethereum.POOL), usdcAmount);
+        AaveV2Ethereum.POOL.deposit(address(USDC), usdcAmount, AaveV2Ethereum.COLLECTOR, 0);
     }
 
     /// @notice Returns amount of USDC that will be received after a bonding curve purchase of BAL

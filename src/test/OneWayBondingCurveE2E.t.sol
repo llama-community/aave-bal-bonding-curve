@@ -146,6 +146,18 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(oneWayBondingCurve.totalBalReceived(), BAL_AMOUNT_IN);
     }
 
+    function testDepositRemainingUsdcInCollector() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), oneWayBondingCurve.BAL_AMOUNT_CAP());
+        oneWayBondingCurve.purchase(oneWayBondingCurve.BAL_AMOUNT_CAP());
+        vm.stopPrank();
+
+        oneWayBondingCurve.depositRemainingUsdcInCollector();
+    }
+
     /*****************************************
      *   POST PROPOSAL EXECUTION FUZZ TESTS  *
      *****************************************/
