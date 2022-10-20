@@ -119,68 +119,62 @@ contract OneWayBondingCurveE2ETest is Test {
         vm.stopPrank();
     }
 
-    // function testPurchase() public {
-    //     // Pass vote and execute proposal
-    //     GovHelpers.passVoteAndExecute(vm, proposalId);
+    function testPurchase() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
 
-    //     vm.startPrank(BAL_WHALE);
-    //     BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
 
-    //     uint256 initialAaveMainnetReserveFactorAusdcBalance = AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR);
-    //     uint256 initialAaveMainnetReserveFactorBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
-    //     uint256 initialPurchaserUsdcBalance = USDC.balanceOf(BAL_WHALE);
-    //     uint256 initialPurchaserBalBalance = BAL.balanceOf(BAL_WHALE);
+        uint256 initialAaveMainnetReserveFactorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialAaveMainnetReserveFactorBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialPurchaserUsdcBalance = USDC.balanceOf(BAL_WHALE);
+        uint256 initialPurchaserBalBalance = BAL.balanceOf(BAL_WHALE);
 
-    //     assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), 0);
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
+        assertEq(oneWayBondingCurve.totalBalReceived(), 0);
 
-    //     vm.expectEmit(true, true, false, true);
-    //     emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 54531300000);
-    //     uint256 usdcAmountOut = oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
+        vm.expectEmit(true, true, false, true);
+        emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 60734562000);
+        uint256 usdcAmountOut = oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
 
-    //     assertEq(
-    //         AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR),
-    //         initialAaveMainnetReserveFactorAusdcBalance - usdcAmountOut
-    //     );
-    //     assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialAaveMainnetReserveFactorBalBalance + BAL_AMOUNT_IN);
-    //     assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
-    //     assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaserBalBalance - BAL_AMOUNT_IN);
-    //     assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), BAL_AMOUNT_IN);
-    // }
+        assertEq(USDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialAaveMainnetReserveFactorUsdcBalance - usdcAmountOut);
+        assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialAaveMainnetReserveFactorBalBalance + BAL_AMOUNT_IN);
+        assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
+        assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaserBalBalance - BAL_AMOUNT_IN);
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
+        assertEq(oneWayBondingCurve.totalBalReceived(), BAL_AMOUNT_IN);
+    }
 
-    // /*****************************************
-    //  *   POST PROPOSAL EXECUTION FUZZ TESTS  *
-    //  *****************************************/
+    /*****************************************
+     *   POST PROPOSAL EXECUTION FUZZ TESTS  *
+     *****************************************/
 
-    // function testPurchaseFuzz(uint256 amount) public {
-    //     // Pass vote and execute proposal
-    //     GovHelpers.passVoteAndExecute(vm, proposalId);
+    function testPurchaseFuzz(uint256 amount) public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
 
-    //     // Assuming upper bound of purchase of 100k BAL
-    //     vm.assume(amount > 2 && amount <= oneWayBondingCurve.BAL_AMOUNT_CAP());
+        // Assuming upper bound of purchase of 100k BAL
+        vm.assume(amount > 0 && amount <= oneWayBondingCurve.BAL_AMOUNT_CAP());
 
-    //     vm.startPrank(BAL_WHALE);
-    //     BAL.approve(address(oneWayBondingCurve), amount);
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), amount);
 
-    //     uint256 initialAaveMainnetReserveFactorAusdcBalance = AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR);
-    //     uint256 initialAaveMainnetReserveFactorBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
-    //     uint256 initialPurchaserUsdcBalance = USDC.balanceOf(BAL_WHALE);
-    //     uint256 initialPurchaserBalBalance = BAL.balanceOf(BAL_WHALE);
+        uint256 initialAaveMainnetReserveFactorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialAaveMainnetReserveFactorBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialPurchaserUsdcBalance = USDC.balanceOf(BAL_WHALE);
+        uint256 initialPurchaserBalBalance = BAL.balanceOf(BAL_WHALE);
 
-    //     assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), 0);
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), 0);
+        assertEq(oneWayBondingCurve.totalBalReceived(), 0);
 
-    //     uint256 usdcAmountOut = oneWayBondingCurve.purchase(amount);
+        uint256 usdcAmountOut = oneWayBondingCurve.purchase(amount);
 
-    //     assertEq(
-    //         AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR),
-    //         initialAaveMainnetReserveFactorAusdcBalance - usdcAmountOut
-    //     );
-    //     assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialAaveMainnetReserveFactorBalBalance + amount);
-    //     assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
-    //     assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaserBalBalance - amount);
-    //     assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
-    //     assertEq(oneWayBondingCurve.totalBalReceived(), amount);
-    // }
+        assertEq(USDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialAaveMainnetReserveFactorUsdcBalance - usdcAmountOut);
+        assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialAaveMainnetReserveFactorBalBalance + amount);
+        assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
+        assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaserBalBalance - amount);
+        assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
+        assertEq(oneWayBondingCurve.totalBalReceived(), amount);
+    }
 }
