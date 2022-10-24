@@ -92,15 +92,15 @@ contract OneWayBondingCurve {
 
     /// @notice Deposit remaining USDC in Aave V2 Collector after 100k BAL Amount Cap has been filled
     function depositUsdcCollector() external {
-        uint256 collectorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 usdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
         uint256 usdcAllowance = USDC.allowance(AaveV2Ethereum.COLLECTOR, address(this));
 
         if (totalBalReceived < BAL_AMOUNT_CAP) revert BalCapNotFilled();
         if (usdcAllowance == 0) revert ZeroAllowance();
-        if (collectorUsdcBalance == 0) revert ZeroBalance();
+        if (usdcBalance == 0) revert ZeroBalance();
 
         // USDC available to Bonding Curve to spend on behalf of Aave V2 Collector
-        uint256 usdcAmount = (usdcAllowance <= collectorUsdcBalance) ? usdcAllowance : collectorUsdcBalance;
+        uint256 usdcAmount = (usdcAllowance <= usdcBalance) ? usdcAllowance : usdcBalance;
 
         USDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), usdcAmount);
         USDC.approve(address(AaveV2Ethereum.POOL), usdcAmount);
@@ -111,15 +111,15 @@ contract OneWayBondingCurve {
 
     /// @notice Deposit all acquired BAL after 100k BAL Amount Cap has been filled
     function depositBalCollector() external {
-        uint256 collectorBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 balBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
         uint256 balAllowance = BAL.allowance(AaveV2Ethereum.COLLECTOR, address(this));
 
         if (totalBalReceived < BAL_AMOUNT_CAP) revert BalCapNotFilled();
         if (balAllowance == 0) revert ZeroAllowance();
-        if (collectorBalBalance == 0) revert ZeroBalance();
+        if (balBalance == 0) revert ZeroBalance();
 
         // BAL available to Bonding Curve to spend on behalf of Aave V2 Collector
-        uint256 balAmount = (balAllowance <= collectorBalBalance) ? balAllowance : collectorBalBalance;
+        uint256 balAmount = (balAllowance <= balBalance) ? balAllowance : balBalance;
 
         BAL.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), balAmount);
         BAL.approve(address(AaveV2Ethereum.POOL), balAmount);
