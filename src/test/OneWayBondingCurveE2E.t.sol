@@ -147,7 +147,22 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(oneWayBondingCurve.totalBalReceived(), BAL_AMOUNT_IN);
     }
 
-    function testDepositRemainingUsdcInCollector() public {
+    function testDepositUsdcCollectorBalCapNotFilled() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        uint256 amount = 90_000e18;
+
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), amount);
+        oneWayBondingCurve.purchase(amount);
+        vm.stopPrank();
+
+        vm.expectRevert(OneWayBondingCurve.BalCapNotFilled.selector);
+        oneWayBondingCurve.depositUsdcCollector();
+    }
+
+    function testDepositUsdcCollector() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
@@ -166,7 +181,7 @@ contract OneWayBondingCurveE2ETest is Test {
 
         vm.expectEmit(true, true, false, true);
         emit Deposit(address(USDC), address(AUSDC), usdcAmount);
-        oneWayBondingCurve.depositRemainingUsdcInCollector();
+        oneWayBondingCurve.depositUsdcCollector();
 
         assertEq(USDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialRemainingCollectorUsdcBalance - usdcAmount);
         assertGe(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialRemainingCollectorAusdcBalance + usdcAmount);

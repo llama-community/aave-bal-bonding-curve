@@ -93,7 +93,7 @@ contract OneWayBondingCurve {
     }
 
     /// @notice Deposit Remaining USDC in Aave V2 Collector after BAL Cap has been filled
-    function depositRemainingUsdcInCollector() external {
+    function depositUsdcCollector() external {
         uint256 collectorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
         uint256 usdcAllowance = USDC.allowance(AaveV2Ethereum.COLLECTOR, address(this));
 
