@@ -230,6 +230,57 @@ contract OneWayBondingCurveE2ETest is Test {
         assertGe(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialRemainingCollectorAusdcBalance + usdcAmount);
     }
 
+    function testDepositBalCollectorBalCapNotFilled() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        uint256 amount = 90_000e18;
+
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), amount);
+        oneWayBondingCurve.purchase(amount);
+        vm.stopPrank();
+
+        vm.expectRevert(OneWayBondingCurve.BalCapNotFilled.selector);
+        oneWayBondingCurve.depositBalCollector();
+    }
+
+    function testDepositBalCollectorZeroAllowance() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        // Filling out 100k BAL CAP
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), oneWayBondingCurve.BAL_AMOUNT_CAP());
+        oneWayBondingCurve.purchase(oneWayBondingCurve.BAL_AMOUNT_CAP());
+        vm.stopPrank();
+
+        // Depositing all remaining BAL in Collector to make allowance 0
+        oneWayBondingCurve.depositBalCollector();
+
+        // Trying Deposit again
+        vm.expectRevert(OneWayBondingCurve.ZeroAllowance.selector);
+        oneWayBondingCurve.depositBalCollector();
+    }
+
+    function testDepositBalCollectorZeroBalance() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        // Filling out 100k BAL CAP
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), oneWayBondingCurve.BAL_AMOUNT_CAP());
+        oneWayBondingCurve.purchase(oneWayBondingCurve.BAL_AMOUNT_CAP());
+        vm.stopPrank();
+
+        // Transferring out remaining BAL in Collector
+        vm.startPrank(AaveV2Ethereum.COLLECTOR);
+        BAL.transfer(address(this), BAL.balanceOf(AaveV2Ethereum.COLLECTOR));
+
+        vm.expectRevert(OneWayBondingCurve.ZeroBalance.selector);
+        oneWayBondingCurve.depositBalCollector();
+    }
+
     function testDepositBalCollector() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
