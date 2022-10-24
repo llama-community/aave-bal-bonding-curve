@@ -42,9 +42,6 @@ contract OneWayBondingCurve {
     /// @notice Cumulative BAL Received
     uint256 public totalBalReceived;
 
-    /// @notice Flag to check if Remaining USDC in Collector has already been deposited
-    bool public hasDepositOccured;
-
     /**************
      *   EVENTS   *
      **************/
