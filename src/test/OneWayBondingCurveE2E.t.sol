@@ -162,6 +162,24 @@ contract OneWayBondingCurveE2ETest is Test {
         oneWayBondingCurve.depositUsdcCollector();
     }
 
+    function testDepositUsdcCollectorZeroUsdcAllowance() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        // Filling out 100k BAL CAP
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), oneWayBondingCurve.BAL_AMOUNT_CAP());
+        oneWayBondingCurve.purchase(oneWayBondingCurve.BAL_AMOUNT_CAP());
+        vm.stopPrank();
+
+        // Depositing all remaining USDC in Collector to make allowance 0
+        oneWayBondingCurve.depositUsdcCollector();
+
+        // Trying Deposit again
+        vm.expectRevert(OneWayBondingCurve.ZeroUsdcAllowance.selector);
+        oneWayBondingCurve.depositUsdcCollector();
+    }
+
     function testDepositUsdcCollector() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
