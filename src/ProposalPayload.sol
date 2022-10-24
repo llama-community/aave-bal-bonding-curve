@@ -20,6 +20,8 @@ contract ProposalPayload {
 
     address public constant USDC_TOKEN = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant AUSDC_TOKEN = 0xBcca60bB61934080951369a648Fb03DF4F96263C;
+    address public constant BAL_TOKEN = 0xba100000625a3754423978a60c9317c58a424e3D;
+    uint256 public constant BAL_AMOUNT_CAP = 100_000e18;
 
     OneWayBondingCurve public immutable oneWayBondingCurve;
     uint256 public immutable ausdcAmount;
@@ -62,6 +64,14 @@ contract ProposalPayload {
             USDC_TOKEN,
             address(oneWayBondingCurve),
             usdcAmount
+        );
+
+        // 4. Approve the One Way Bonding Curve contract to spend 100K BAL from AAVE V2 Collector
+        IAaveEcosystemReserveController(AaveV2Ethereum.COLLECTOR_CONTROLLER).approve(
+            AaveV2Ethereum.COLLECTOR,
+            BAL_TOKEN,
+            address(oneWayBondingCurve),
+            BAL_AMOUNT_CAP
         );
     }
 }

@@ -23,6 +23,7 @@ contract OneWayBondingCurve {
     uint256 public constant BASIS_POINTS_ARBITRAGE_INCENTIVE = 50;
 
     IERC20 public constant BAL = IERC20(0xba100000625a3754423978a60c9317c58a424e3D);
+    IERC20 public constant ABAL = IERC20(0x272F97b7a56a387aE942350bBC7Df5700f8a4576);
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 public constant AUSDC = IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C);
     AggregatorV3Interface public constant BAL_USD_FEED =
@@ -58,8 +59,8 @@ contract OneWayBondingCurve {
     error OnlyNonZeroAmount();
     error ExcessBalAmountIn();
     error BalCapNotFilled();
-    error ZeroUsdcAllowance();
-    error ZeroUsdcBalanceCollector();
+    error ZeroAllowance();
+    error ZeroBalance();
     error InvalidOracleAnswer();
 
     /*****************
@@ -87,19 +88,19 @@ contract OneWayBondingCurve {
         emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
     }
 
-    /// @notice Returns how close to the BAL amount cap we are
+    /// @notice Returns how close to the 100k BAL amount cap we are
     function availableBalToBeFilled() public view returns (uint256) {
         return BAL_AMOUNT_CAP - totalBalReceived;
     }
 
-    /// @notice Deposit Remaining USDC in Aave V2 Collector after BAL Cap has been filled
+    /// @notice Deposit remaining USDC in Aave V2 Collector after 100k BAL Amount Cap has been filled
     function depositUsdcCollector() external {
         uint256 collectorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
         uint256 usdcAllowance = USDC.allowance(AaveV2Ethereum.COLLECTOR, address(this));
 
         if (totalBalReceived < BAL_AMOUNT_CAP) revert BalCapNotFilled();
-        if (usdcAllowance == 0) revert ZeroUsdcAllowance();
-        if (collectorUsdcBalance == 0) revert ZeroUsdcBalanceCollector();
+        if (usdcAllowance == 0) revert ZeroAllowance();
+        if (collectorUsdcBalance == 0) revert ZeroBalance();
 
         // USDC available to Bonding Curve to spend on behalf of Aave V2 Collector
         uint256 usdcAmount = (usdcAllowance <= collectorUsdcBalance) ? usdcAllowance : collectorUsdcBalance;
@@ -109,6 +110,25 @@ contract OneWayBondingCurve {
         AaveV2Ethereum.POOL.deposit(address(USDC), usdcAmount, AaveV2Ethereum.COLLECTOR, 0);
 
         emit Deposit(address(USDC), address(AUSDC), usdcAmount);
+    }
+
+    /// @notice Deposit all acquired BAL after 100k BAL Amount Cap has been filled
+    function depositBalCollector() external {
+        uint256 collectorBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 balAllowance = BAL.allowance(AaveV2Ethereum.COLLECTOR, address(this));
+
+        if (totalBalReceived < BAL_AMOUNT_CAP) revert BalCapNotFilled();
+        if (balAllowance == 0) revert ZeroAllowance();
+        if (collectorBalBalance == 0) revert ZeroBalance();
+
+        // BAL available to Bonding Curve to spend on behalf of Aave V2 Collector
+        uint256 balAmount = (balAllowance <= collectorBalBalance) ? balAllowance : collectorBalBalance;
+
+        BAL.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), balAmount);
+        BAL.approve(address(AaveV2Ethereum.POOL), balAmount);
+        AaveV2Ethereum.POOL.deposit(address(BAL), balAmount, AaveV2Ethereum.COLLECTOR, 0);
+
+        emit Deposit(address(BAL), address(ABAL), balAmount);
     }
 
     /// @notice Returns amount of USDC that will be received after a bonding curve purchase of BAL

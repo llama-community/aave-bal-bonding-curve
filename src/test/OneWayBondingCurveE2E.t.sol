@@ -26,6 +26,7 @@ contract OneWayBondingCurveE2ETest is Test {
     uint256 public constant BASIS_POINTS_ARBITRAGE_INCENTIVE = 50;
 
     IERC20 public constant BAL = IERC20(0xba100000625a3754423978a60c9317c58a424e3D);
+    IERC20 public constant ABAL = IERC20(0x272F97b7a56a387aE942350bBC7Df5700f8a4576);
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 public constant AUSDC = IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C);
     AggregatorV3Interface public constant BAL_USD_FEED =
@@ -69,6 +70,7 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(USDC.balanceOf(address(proposalPayload)), 0);
         assertEq(AUSDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), 0);
         assertEq(USDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), 0);
+        assertEq(BAL.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), 0);
 
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
@@ -81,6 +83,10 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(USDC.balanceOf(address(proposalPayload)), 0);
         assertEq(AUSDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), 0);
         assertEq(USDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), USDC_AMOUNT);
+        assertEq(
+            BAL.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)),
+            oneWayBondingCurve.BAL_AMOUNT_CAP()
+        );
     }
 
     // /************************************
@@ -162,7 +168,7 @@ contract OneWayBondingCurveE2ETest is Test {
         oneWayBondingCurve.depositUsdcCollector();
     }
 
-    function testDepositUsdcCollectorZeroUsdcAllowance() public {
+    function testDepositUsdcCollectorZeroAllowance() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
@@ -176,7 +182,25 @@ contract OneWayBondingCurveE2ETest is Test {
         oneWayBondingCurve.depositUsdcCollector();
 
         // Trying Deposit again
-        vm.expectRevert(OneWayBondingCurve.ZeroUsdcAllowance.selector);
+        vm.expectRevert(OneWayBondingCurve.ZeroAllowance.selector);
+        oneWayBondingCurve.depositUsdcCollector();
+    }
+
+    function testDepositUsdcCollectorZeroBalance() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        // Filling out 100k BAL CAP
+        vm.startPrank(BAL_WHALE);
+        BAL.approve(address(oneWayBondingCurve), oneWayBondingCurve.BAL_AMOUNT_CAP());
+        oneWayBondingCurve.purchase(oneWayBondingCurve.BAL_AMOUNT_CAP());
+        vm.stopPrank();
+
+        // Transferring out remaining USDC in Collector
+        vm.startPrank(AaveV2Ethereum.COLLECTOR);
+        USDC.transfer(address(this), USDC.balanceOf(AaveV2Ethereum.COLLECTOR));
+
+        vm.expectRevert(OneWayBondingCurve.ZeroBalance.selector);
         oneWayBondingCurve.depositUsdcCollector();
     }
 
