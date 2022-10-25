@@ -4,7 +4,6 @@ pragma solidity ^0.8.15;
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
 import {AggregatorV3Interface} from "./external/AggregatorV3Interface.sol";
-import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
 import {AaveV2Ethereum} from "@aave-address-book/AaveV2Ethereum.sol";
 
 /// @title OneWayBondingCurve
@@ -19,18 +18,13 @@ contract OneWayBondingCurve {
 
     uint256 public constant BAL_AMOUNT_CAP = 100_000e18;
 
-    uint256 public constant BASIS_POINTS_GRANULARITY = 10_000;
-    uint256 public constant BASIS_POINTS_ARBITRAGE_INCENTIVE = 50;
-
     IERC20 public constant BAL = IERC20(0xba100000625a3754423978a60c9317c58a424e3D);
     IERC20 public constant ABAL = IERC20(0x272F97b7a56a387aE942350bBC7Df5700f8a4576);
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 public constant AUSDC = IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C);
+
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
-
-    uint256 public constant USDC_BASE = 10**6;
-    uint256 public constant BAL_BASE = 10**18;
 
     /*************************
      *   STORAGE VARIABLES   *
@@ -72,11 +66,11 @@ contract OneWayBondingCurve {
         if (amountIn == 0) revert OnlyNonZeroAmount();
         if (amountIn > availableBalToBeFilled()) revert ExcessBalAmountIn();
 
-        totalBalReceived += amountIn;
         amountOut = getAmountOut(amountIn);
-        totalUsdcPurchased += amountOut;
+        if (amountOut == 0) revert OnlyNonZeroAmount();
 
-        // TODO: Have an assertion for amountOut to be > 0
+        totalBalReceived += amountIn;
+        totalUsdcPurchased += amountOut;
 
         // Execute the purchase
         BAL.safeTransferFrom(msg.sender, AaveV2Ethereum.COLLECTOR, amountIn);
@@ -88,6 +82,27 @@ contract OneWayBondingCurve {
     /// @notice Returns how close to the 100k BAL amount cap we are
     function availableBalToBeFilled() public view returns (uint256) {
         return BAL_AMOUNT_CAP - totalBalReceived;
+    }
+
+    /// @notice Returns amount of USDC that will be received after a bonding curve purchase of BAL
+    /// @param amountIn the amount of BAL used to purchase
+    /// @return amountOutWithBonus the amount of USDC received with 50 bps incentive included
+    function getAmountOut(uint256 amountIn) public view returns (uint256 amountOutWithBonus) {
+        /** 
+            The actual calculation is a collapsed version of this to prevent precision loss:
+            => amountOut = (amountBALWei / 10^balDecimals) * (chainlinkPrice / chainlinkPrecision) * 10^usdcDecimals
+            => amountOut = (amountBalWei / 10^18) * (chainlinkPrice / 10^8) * 10^6
+         */
+        uint256 amountOut = (amountIn * getOraclePrice()) / 10**20;
+        // 50bps arbitrage incentive
+        amountOutWithBonus = (amountOut * 10050) / 10000;
+    }
+
+    /// @notice The peg price of the referenced oracle as USD per BAL
+    function getOraclePrice() public view returns (uint256) {
+        (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
+        if (price <= 0) revert InvalidOracleAnswer();
+        return uint256(price);
     }
 
     /// @notice Deposit remaining USDC in Aave V2 Collector after 100k BAL Amount Cap has been filled
@@ -134,46 +149,5 @@ contract OneWayBondingCurve {
         for (uint256 i = 0; i < tokens.length; i++) {
             IERC20(tokens[i]).safeTransfer(AaveV2Ethereum.COLLECTOR, IERC20(tokens[i]).balanceOf(address(this)));
         }
-    }
-
-    /// @notice Returns amount of USDC that will be received after a bonding curve purchase of BAL
-    /// @param amountIn the amount of BAL used to purchase
-    /// @return amountOut the amount of USDC received
-    function getAmountOut(uint256 amountIn) public view returns (uint256 amountOut) {
-        // Normalizing input BAL amount from BAL decimals (18) to USDC decimals (6)
-        uint256 normalizedAmountIn = normalizeFromBALDecimalsToUSDCDecimals(amountIn);
-        // The actual USDC value of the input BAL amount
-        uint256 usdcValueOfAmountIn = FixedPointMathLib.mulDivDown(getOraclePrice(), normalizedAmountIn, USDC_BASE);
-        // The incentivized USDC value of the input BAL amount
-        amountOut = FixedPointMathLib.mulDivDown(getBondingCurvePriceMultiplier(), usdcValueOfAmountIn, USDC_BASE);
-    }
-
-    /// @notice The peg price of the referenced oracle as USD per BAL
-    /// @return value The USD peg value in USDC decimals (6)
-    function getOraclePrice() public view returns (uint256 value) {
-        (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
-        if (price <= 0) revert InvalidOracleAnswer();
-        // Normalizing output from Chainlink Oracle from Oracle decimals to USDC decimals (6)
-        value = normalizeFromOracleDecimalstoUSDCDecimals(uint256(price));
-    }
-
-    /// @notice Normalize BAL decimals (18) to USDC decimals (6)
-    function normalizeFromBALDecimalsToUSDCDecimals(uint256 amount) public pure returns (uint256) {
-        return FixedPointMathLib.mulDivDown(amount, USDC_BASE, BAL_BASE);
-    }
-
-    /// @notice Normalize BAL/USD Chainlink Oracle Feed decimals to USDC decimals (6)
-    function normalizeFromOracleDecimalstoUSDCDecimals(uint256 amount) public view returns (uint256) {
-        return FixedPointMathLib.mulDivDown(amount, USDC_BASE, 10**uint256(BAL_USD_FEED.decimals()));
-    }
-
-    /// @notice The bonding curve price multiplier with arbitrage incentive
-    function getBondingCurvePriceMultiplier() public pure returns (uint256) {
-        return
-            FixedPointMathLib.mulDivDown(
-                BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE,
-                USDC_BASE,
-                BASIS_POINTS_GRANULARITY
-            );
     }
 }
