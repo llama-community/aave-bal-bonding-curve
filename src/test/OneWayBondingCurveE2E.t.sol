@@ -145,7 +145,7 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(oneWayBondingCurve.totalBalReceived(), 0);
 
         vm.expectEmit(true, true, false, true);
-        emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 60734562000);
+        emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 60734568934);
         uint256 usdcAmountOut = oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
 
         assertEq(USDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorUsdcBalance - usdcAmountOut);
@@ -380,8 +380,8 @@ contract OneWayBondingCurveE2ETest is Test {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
-        // Assuming upper bound of purchase of 100k BAL
-        vm.assume(amount > 0 && amount <= oneWayBondingCurve.BAL_AMOUNT_CAP());
+        // Assuming upper bound of purchase of 100k BAL and lower bound of 0.000001 BAL
+        vm.assume(amount >= 1e12 && amount <= oneWayBondingCurve.BAL_AMOUNT_CAP());
 
         vm.startPrank(BAL_WHALE);
         BAL.approve(address(oneWayBondingCurve), amount);
