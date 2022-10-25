@@ -19,6 +19,8 @@ contract OneWayBondingCurveE2ETest is Test {
 
     address public constant AAVE_WHALE = 0xBE0eB53F46cd790Cd13851d5EFf43D12404d33E8;
     address public constant BAL_WHALE = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
+    address public constant USDC_WHALE = 0x55FE002aefF02F77364de339a1292923A15844B8;
+    address public constant ETH_WHALE = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
 
     uint256 public proposalId;
 
@@ -29,6 +31,7 @@ contract OneWayBondingCurveE2ETest is Test {
     IERC20 public constant ABAL = IERC20(0x272F97b7a56a387aE942350bBC7Df5700f8a4576);
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 public constant AUSDC = IERC20(0xBcca60bB61934080951369a648Fb03DF4F96263C);
+
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
 
@@ -300,6 +303,45 @@ contract OneWayBondingCurveE2ETest is Test {
 
         assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialBalBalance - balAmount);
         assertGe(ABAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialAbalBalance + balAmount);
+    }
+
+    function testSendEthtoBondingCurve() public {
+        // Testing that you can't send ETH to the contract directly since not payable
+        vm.startPrank(ETH_WHALE);
+        (bool success, ) = address(oneWayBondingCurve).call{value: 1 ether}("");
+        assertTrue(!success);
+    }
+
+    function testRescueTokens() public {
+        assertEq(BAL.balanceOf(address(oneWayBondingCurve)), 0);
+        assertEq(USDC.balanceOf(address(oneWayBondingCurve)), 0);
+
+        uint256 balAmount = 10_000e18;
+        uint256 usdcAmount = 10_000e6;
+
+        vm.startPrank(BAL_WHALE);
+        BAL.transfer(address(oneWayBondingCurve), balAmount);
+        vm.stopPrank();
+
+        vm.startPrank(USDC_WHALE);
+        USDC.transfer(address(oneWayBondingCurve), usdcAmount);
+        vm.stopPrank();
+
+        assertEq(BAL.balanceOf(address(oneWayBondingCurve)), balAmount);
+        assertEq(USDC.balanceOf(address(oneWayBondingCurve)), usdcAmount);
+
+        uint256 initialCollectorBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialCollectorUsdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(BAL);
+        tokens[1] = address(USDC);
+        oneWayBondingCurve.rescueTokens(tokens);
+
+        assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorBalBalance + balAmount);
+        assertEq(USDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorUsdcBalance + usdcAmount);
+        assertEq(BAL.balanceOf(address(oneWayBondingCurve)), 0);
+        assertEq(USDC.balanceOf(address(oneWayBondingCurve)), 0);
     }
 
     /*****************************************
