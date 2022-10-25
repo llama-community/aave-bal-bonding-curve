@@ -94,7 +94,7 @@ contract OneWayBondingCurve {
             => amountOut = (amountBalWei / 10^18) * (chainlinkPrice / 10^8) * 10^6
          */
         uint256 amountOut = (amountIn * getOraclePrice()) / 10**20;
-        // 50bps arbitrage incentive
+        // 50 bps arbitrage incentive
         amountOutWithBonus = (amountOut * 10050) / 10000;
     }
 

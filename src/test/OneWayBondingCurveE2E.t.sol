@@ -164,6 +164,55 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(oneWayBondingCurve.totalBalReceived(), BAL_AMOUNT_IN);
     }
 
+    function testGetAmountOut() public {
+        assertEq(oneWayBondingCurve.getAmountOut(BAL_AMOUNT_IN), 60734568934);
+    }
+
+    function testOraclePriceZeroAmount() public {
+        // Mocking returned value of Price = 0
+        vm.mockCall(
+            address(BAL_USD_FEED),
+            abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
+            abi.encode(uint80(10), int256(0), uint256(2), uint256(3), uint80(10))
+        );
+
+        vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
+        oneWayBondingCurve.getOraclePrice();
+
+        vm.clearMockedCalls();
+    }
+
+    function testOraclePriceNegativeAmount() public {
+        // Mocking returned value of Price < 0
+        vm.mockCall(
+            address(BAL_USD_FEED),
+            abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
+            abi.encode(uint80(10), int256(-1), uint256(2), uint256(3), uint80(10))
+        );
+
+        vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
+        oneWayBondingCurve.getOraclePrice();
+
+        vm.clearMockedCalls();
+    }
+
+    function testGetOraclePrice() public {
+        assertEq(BAL_USD_FEED.decimals(), 8);
+        (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
+        assertEq(uint256(price), 604324069);
+        assertEq(oneWayBondingCurve.getOraclePrice(), 604324069);
+    }
+
+    function testGetOraclePriceAtMultipleIntervals() public {
+        // Testing for around 50000 blocks
+        // BAL/USD Chainlink price feed updates every 24 hours ~= 6500 blocks
+        for (uint256 i = 0; i < 5000; i++) {
+            vm.roll(block.number - 10);
+            (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
+            assertEq(oneWayBondingCurve.getOraclePrice(), uint256(price));
+        }
+    }
+
     function testDepositUsdcCollectorBalCapNotFilled() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
@@ -350,51 +399,6 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(USDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorUsdcBalance + usdcAmount);
         assertEq(BAL.balanceOf(address(oneWayBondingCurve)), 0);
         assertEq(USDC.balanceOf(address(oneWayBondingCurve)), 0);
-    }
-
-    function testOraclePriceZeroAmount() public {
-        // Mocking returned value of Price = 0
-        vm.mockCall(
-            address(BAL_USD_FEED),
-            abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
-            abi.encode(uint80(10), int256(0), uint256(2), uint256(3), uint80(10))
-        );
-
-        vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
-        oneWayBondingCurve.getOraclePrice();
-
-        vm.clearMockedCalls();
-    }
-
-    function testOraclePriceNegativeAmount() public {
-        // Mocking returned value of Price < 0
-        vm.mockCall(
-            address(BAL_USD_FEED),
-            abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
-            abi.encode(uint80(10), int256(-1), uint256(2), uint256(3), uint80(10))
-        );
-
-        vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
-        oneWayBondingCurve.getOraclePrice();
-
-        vm.clearMockedCalls();
-    }
-
-    function testGetOraclePrice() public {
-        assertEq(BAL_USD_FEED.decimals(), 8);
-        (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
-        assertEq(uint256(price), 604324069);
-        assertEq(oneWayBondingCurve.getOraclePrice(), 604324069);
-    }
-
-    function testGetOraclePriceAtMultipleIntervals() public {
-        // Testing for around 50000 blocks
-        // BAL/USD Chainlink price feed updates every 24 hours ~= 6500 blocks
-        for (uint256 i = 0; i < 5000; i++) {
-            vm.roll(block.number - 10);
-            (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
-            assertEq(oneWayBondingCurve.getOraclePrice(), uint256(price));
-        }
     }
 
     /*****************************************
