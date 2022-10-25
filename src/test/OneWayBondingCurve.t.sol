@@ -47,48 +47,6 @@ contract OneWayBondingCurveTest is Test {
     //     assertEq(oneWayBondingCurve.getBondingCurvePriceMultiplier(), 1005000);
     // }
 
-    // function testZeroAmountOraclePrice() public {
-    //     // Mocking returned value of Price = 0
-    //     vm.mockCall(
-    //         address(BAL_USD_FEED),
-    //         abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
-    //         abi.encode(uint80(10), int256(0), uint256(2), uint256(3), uint80(10))
-    //     );
-
-    //     vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
-    //     oneWayBondingCurve.getOraclePrice();
-
-    //     vm.clearMockedCalls();
-    // }
-
-    // function testNegativeAmountOraclePrice() public {
-    //     // Mocking returned value of Price < 0
-    //     vm.mockCall(
-    //         address(BAL_USD_FEED),
-    //         abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
-    //         abi.encode(uint80(10), int256(-1), uint256(2), uint256(3), uint80(10))
-    //     );
-
-    //     vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
-    //     oneWayBondingCurve.getOraclePrice();
-
-    //     vm.clearMockedCalls();
-    // }
-
-    // function testRoundNotMatchingOraclePrice() public {
-    //     // Mocking mismatched roundID and answeredInRound values that are returned
-    //     vm.mockCall(
-    //         address(BAL_USD_FEED),
-    //         abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
-    //         abi.encode(uint80(10), int256(600000000), uint256(2), uint256(3), uint80(9))
-    //     );
-
-    //     vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
-    //     oneWayBondingCurve.getOraclePrice();
-
-    //     vm.clearMockedCalls();
-    // }
-
     // function testGetOraclePrice() public {
     //     assertEq(BAL_USD_FEED.decimals(), 8);
     //     (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
@@ -141,38 +99,6 @@ contract OneWayBondingCurveTest is Test {
     //         oneWayBondingCurve.normalizeFromOracleDecimalstoUSDCDecimals(amount),
     //         (amount * USDC_BASE) / (10**uint256(BAL_USD_FEED.decimals()))
     //     );
-    // }
-
-    // function testInvalidPriceFromOracleFuzz(int256 price) public {
-    //     vm.assume(price <= int256(0));
-
-    //     // Mocking returned value of price <=0
-    //     vm.mockCall(
-    //         address(BAL_USD_FEED),
-    //         abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
-    //         abi.encode(uint80(10), price, uint256(2), uint256(3), uint80(10))
-    //     );
-
-    //     vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
-    //     oneWayBondingCurve.getOraclePrice();
-
-    //     vm.clearMockedCalls();
-    // }
-
-    // function testRoundNotMatchingFromOracleFuzz(uint80 roundId, uint80 answeredInRound) public {
-    //     vm.assume(roundId != answeredInRound);
-
-    //     // Mocking mismatched roundID and answeredInRound values that are returned
-    //     vm.mockCall(
-    //         address(BAL_USD_FEED),
-    //         abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
-    //         abi.encode(roundId, int256(600000000), uint256(2), uint256(3), answeredInRound)
-    //     );
-
-    //     vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
-    //     oneWayBondingCurve.getOraclePrice();
-
-    //     vm.clearMockedCalls();
     // }
 
     // function testGetAmountOutFuzz(uint256 amount) public {

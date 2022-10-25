@@ -344,6 +344,34 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(USDC.balanceOf(address(oneWayBondingCurve)), 0);
     }
 
+    function testOraclePriceZeroAmount() public {
+        // Mocking returned value of Price = 0
+        vm.mockCall(
+            address(BAL_USD_FEED),
+            abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
+            abi.encode(uint80(10), int256(0), uint256(2), uint256(3), uint80(10))
+        );
+
+        vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
+        oneWayBondingCurve.getOraclePrice();
+
+        vm.clearMockedCalls();
+    }
+
+    function testOraclePriceNegativeAmount() public {
+        // Mocking returned value of Price < 0
+        vm.mockCall(
+            address(BAL_USD_FEED),
+            abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
+            abi.encode(uint80(10), int256(-1), uint256(2), uint256(3), uint80(10))
+        );
+
+        vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
+        oneWayBondingCurve.getOraclePrice();
+
+        vm.clearMockedCalls();
+    }
+
     /*****************************************
      *   POST PROPOSAL EXECUTION FUZZ TESTS  *
      *****************************************/
@@ -374,5 +402,21 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaserBalBalance - amount);
         assertEq(oneWayBondingCurve.totalUsdcPurchased(), usdcAmountOut);
         assertEq(oneWayBondingCurve.totalBalReceived(), amount);
+    }
+
+    function testInvalidPriceFromOracleFuzz(int256 price) public {
+        vm.assume(price <= int256(0));
+
+        // Mocking returned value of price <=0
+        vm.mockCall(
+            address(BAL_USD_FEED),
+            abi.encodeWithSelector(BAL_USD_FEED.latestRoundData.selector),
+            abi.encode(uint80(10), price, uint256(2), uint256(3), uint80(10))
+        );
+
+        vm.expectRevert(OneWayBondingCurve.InvalidOracleAnswer.selector);
+        oneWayBondingCurve.getOraclePrice();
+
+        vm.clearMockedCalls();
     }
 }
