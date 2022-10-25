@@ -103,12 +103,20 @@ contract OneWayBondingCurveE2ETest is Test {
         assertLe(USDC_AMOUNT, USDC.balanceOf(AaveV2Ethereum.COLLECTOR));
     }
 
-    function testPurchaseZeroAmount() public {
+    function testPurchaseZeroAmountIn() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
         vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
         oneWayBondingCurve.purchase(0);
+    }
+
+    function testPurchaseZeroAmountOut() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
+        oneWayBondingCurve.purchase(1e11);
     }
 
     function testPurchaseHitBalCeiling() public {
