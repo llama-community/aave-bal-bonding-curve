@@ -314,7 +314,7 @@ contract OneWayBondingCurveE2ETest is Test {
     }
 
     function testSendEthtoBondingCurve() public {
-        // Testing that you can't send ETH to the contract directly since not payable
+        // Testing that you can't send ETH to the contract directly since there's no fallback() or receive() function
         vm.startPrank(ETH_WHALE);
         (bool success, ) = address(oneWayBondingCurve).call{value: 1 ether}("");
         assertTrue(!success);
@@ -379,6 +379,26 @@ contract OneWayBondingCurveE2ETest is Test {
 
         vm.clearMockedCalls();
     }
+
+    function testGetOraclePrice() public {
+        assertEq(BAL_USD_FEED.decimals(), 8);
+        (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
+        assertEq(uint256(price), 604324069);
+        assertEq(oneWayBondingCurve.getOraclePrice(), 604324069);
+    }
+
+    // function testGetOraclePriceAtMultipleIntervals() public {
+    //     // Testing for around 50000 blocks
+    //     // BAL/USD Chainlink price feed updates every 24 hours ~= 6500 blocks
+    //     for (uint256 i = 0; i < 5000; i++) {
+    //         vm.roll(block.number - 10);
+    //         (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
+    //         assertEq(
+    //             oneWayBondingCurve.getOraclePrice(),
+    //             oneWayBondingCurve.normalizeFromOracleDecimalstoUSDCDecimals(uint256(price))
+    //         );
+    //     }
+    // }
 
     /*****************************************
      *   POST PROPOSAL EXECUTION FUZZ TESTS  *

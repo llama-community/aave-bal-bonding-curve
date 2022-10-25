@@ -39,14 +39,6 @@ contract OneWayBondingCurveTest is Test {
         vm.label(address(oneWayBondingCurve), "OneWayBondingCurve");
     }
 
-    // function testGetBondingCurvePriceMultiplier() public {
-    //     assertEq(
-    //         oneWayBondingCurve.getBondingCurvePriceMultiplier(),
-    //         ((BASIS_POINTS_GRANULARITY + BASIS_POINTS_ARBITRAGE_INCENTIVE) * USDC_BASE) / BASIS_POINTS_GRANULARITY
-    //     );
-    //     assertEq(oneWayBondingCurve.getBondingCurvePriceMultiplier(), 1005000);
-    // }
-
     // function testGetOraclePrice() public {
     //     assertEq(BAL_USD_FEED.decimals(), 8);
     //     (, int256 price, , , ) = BAL_USD_FEED.latestRoundData();
@@ -83,23 +75,6 @@ contract OneWayBondingCurveTest is Test {
     // /*****************
     //  *   FUZZ TESTS  *
     //  *****************/
-
-    // function testNormalizeFromBALDecimalsToUSDCDecimals(uint256 amount) public {
-    //     // Assuming reasonable Balancer amount upper bound of BAL Total Supply
-    //     vm.assume(amount <= BAL.totalSupply());
-
-    //     assertEq(oneWayBondingCurve.normalizeFromBALDecimalsToUSDCDecimals(amount), (amount * USDC_BASE) / BAL_BASE);
-    // }
-
-    // function testNormalizeFromOracleDecimalstoUSDCDecimals(uint256 amount) public {
-    //     // Assuming reasonable Balancer upper bound price of 1 BAL = $1 Million
-    //     vm.assume(amount <= (1e6**uint256(BAL_USD_FEED.decimals())));
-
-    //     assertEq(
-    //         oneWayBondingCurve.normalizeFromOracleDecimalstoUSDCDecimals(amount),
-    //         (amount * USDC_BASE) / (10**uint256(BAL_USD_FEED.decimals()))
-    //     );
-    // }
 
     // function testGetAmountOutFuzz(uint256 amount) public {
     //     // Assuming reasonable Balancer amount upper bound of BAL Total Supply
