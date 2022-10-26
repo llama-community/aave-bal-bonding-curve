@@ -145,8 +145,8 @@ contract OneWayBondingCurve {
 
     /// @notice Transfer any tokens accidentally sent to this contract to Aave V2 Collector
     /// @param tokens List of token addresses
-    function rescueTokens(address[] memory tokens) external {
-        for (uint256 i = 0; i < tokens.length; i++) {
+    function rescueTokens(address[] calldata tokens) external {
+        for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeTransfer(AaveV2Ethereum.COLLECTOR, IERC20(tokens[i]).balanceOf(address(this)));
         }
     }
