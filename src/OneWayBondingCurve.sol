@@ -109,7 +109,7 @@ contract OneWayBondingCurve {
         return uint256(price);
     }
 
-    /// @notice Deposit remaining USDC in Aave V2 Collector after 100k BAL Amount Cap has been filled
+    /// @notice Deposit remaining USDC in Aave V2 Collector to earn yield after 100k BAL Amount Cap has been filled
     function depositUsdcCollector() external {
         uint256 usdcBalance = USDC.balanceOf(AaveV2Ethereum.COLLECTOR);
         uint256 usdcAllowance = USDC.allowance(AaveV2Ethereum.COLLECTOR, address(this));
@@ -128,12 +128,11 @@ contract OneWayBondingCurve {
         emit Deposit(address(USDC), address(AUSDC), usdcAmount);
     }
 
-    /// @notice Deposit all acquired BAL after 100k BAL Amount Cap has been filled
+    /// @notice Deposit all acquired BAL in Aave V2 Collector to earn yield
     function depositBalCollector() external {
         uint256 balBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
         uint256 balAllowance = BAL.allowance(AaveV2Ethereum.COLLECTOR, address(this));
 
-        if (totalBalReceived < BAL_AMOUNT_CAP) revert BalCapNotFilled();
         if (balAllowance == 0) revert ZeroAllowance();
         if (balBalance == 0) revert ZeroBalance();
 

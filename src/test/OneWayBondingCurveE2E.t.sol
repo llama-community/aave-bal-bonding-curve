@@ -24,9 +24,6 @@ contract OneWayBondingCurveE2ETest is Test {
 
     uint256 public proposalId;
 
-    uint256 public constant BASIS_POINTS_GRANULARITY = 10_000;
-    uint256 public constant BASIS_POINTS_ARBITRAGE_INCENTIVE = 50;
-
     IERC20 public constant BAL = IERC20(0xba100000625a3754423978a60c9317c58a424e3D);
     IERC20 public constant ABAL = IERC20(0x272F97b7a56a387aE942350bBC7Df5700f8a4576);
     IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
@@ -34,9 +31,6 @@ contract OneWayBondingCurveE2ETest is Test {
 
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
-
-    uint256 public constant USDC_BASE = 10**6;
-    uint256 public constant BAL_BASE = 10**18;
 
     uint256 public constant AUSDC_AMOUNT = 350_000e6;
     uint256 public constant USDC_AMOUNT = 700_000e6;
@@ -86,10 +80,7 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(USDC.balanceOf(address(proposalPayload)), 0);
         assertEq(AUSDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), 0);
         assertEq(USDC.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), USDC_AMOUNT);
-        assertEq(
-            BAL.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)),
-            oneWayBondingCurve.BAL_AMOUNT_CAP()
-        );
+        assertEq(BAL.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve)), 300_000e18);
     }
 
     // /************************************
@@ -287,21 +278,6 @@ contract OneWayBondingCurveE2ETest is Test {
         assertGe(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialAusdcBalance + usdcAmount);
     }
 
-    function testDepositBalCollectorBalCapNotFilled() public {
-        // Pass vote and execute proposal
-        GovHelpers.passVoteAndExecute(vm, proposalId);
-
-        uint256 amount = 90_000e18;
-
-        vm.startPrank(BAL_WHALE);
-        BAL.approve(address(oneWayBondingCurve), amount);
-        oneWayBondingCurve.purchase(amount);
-        vm.stopPrank();
-
-        vm.expectRevert(OneWayBondingCurve.BalCapNotFilled.selector);
-        oneWayBondingCurve.depositBalCollector();
-    }
-
     function testDepositBalCollectorZeroAllowance() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
@@ -338,7 +314,28 @@ contract OneWayBondingCurveE2ETest is Test {
         oneWayBondingCurve.depositBalCollector();
     }
 
-    function testDepositBalCollector() public {
+    function testDepositBalCollectorPreBondingCurveAcquisition() public {
+        // Pass vote and execute proposal
+        GovHelpers.passVoteAndExecute(vm, proposalId);
+
+        uint256 initialBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
+        uint256 initialBalAllowance = BAL.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve));
+        uint256 balAmount = (initialBalAllowance <= initialBalBalance) ? initialBalAllowance : initialBalBalance;
+
+        assertEq(balAmount, initialBalBalance);
+        assertEq(balAmount, 200_000e18);
+
+        uint256 initialAbalBalance = ABAL.balanceOf(AaveV2Ethereum.COLLECTOR);
+
+        vm.expectEmit(true, true, false, true);
+        emit Deposit(address(BAL), address(ABAL), balAmount);
+        oneWayBondingCurve.depositBalCollector();
+
+        assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialBalBalance - balAmount);
+        assertGe(ABAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialAbalBalance + balAmount);
+    }
+
+    function testDepositBalCollectorPostBondingCurveAcquisition() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
@@ -351,6 +348,9 @@ contract OneWayBondingCurveE2ETest is Test {
         uint256 initialBalBalance = BAL.balanceOf(AaveV2Ethereum.COLLECTOR);
         uint256 initialBalAllowance = BAL.allowance(AaveV2Ethereum.COLLECTOR, address(oneWayBondingCurve));
         uint256 balAmount = (initialBalAllowance <= initialBalBalance) ? initialBalAllowance : initialBalBalance;
+
+        assertEq(balAmount, initialBalAllowance);
+        assertEq(balAmount, 300_000e18);
 
         uint256 initialAbalBalance = ABAL.balanceOf(AaveV2Ethereum.COLLECTOR);
 
