@@ -62,11 +62,11 @@ contract OneWayBondingCurve {
     /// @param amountIn Amount of BAL input
     /// @return amountOut Amount of USDC received
     /// @dev Purchaser has to approve BAL transfer before calling this function
-    function purchase(uint256 amountIn) external returns (uint256 amountOut) {
+    function purchase(uint256 amountIn) external returns (uint256) {
         if (amountIn == 0) revert OnlyNonZeroAmount();
         if (amountIn > availableBalToBeFilled()) revert ExcessBalAmountIn();
 
-        amountOut = getAmountOut(amountIn);
+        uint256 amountOut = getAmountOut(amountIn);
         if (amountOut == 0) revert OnlyNonZeroAmount();
 
         totalBalReceived += amountIn;
@@ -77,9 +77,12 @@ contract OneWayBondingCurve {
         USDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, msg.sender, amountOut);
 
         emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
+        return amountOut;
     }
 
     /// @notice Returns how close to the 100k BAL amount cap we are
+    /// @return availableBalToBeFilled the amount of BAL left to be filled
+    /// @dev Purchaser check this function before calling purchase() to see if there is BAL left to be filled
     function availableBalToBeFilled() public view returns (uint256) {
         return BAL_AMOUNT_CAP - totalBalReceived;
     }
@@ -87,7 +90,8 @@ contract OneWayBondingCurve {
     /// @notice Returns amount of USDC that will be received after a bonding curve purchase of BAL
     /// @param amountIn the amount of BAL used to purchase
     /// @return amountOutWithBonus the amount of USDC received with 50 bps incentive included
-    function getAmountOut(uint256 amountIn) public view returns (uint256 amountOutWithBonus) {
+    /// @dev Purchaser check this function before calling purchase() to see the amount of USDC you'll get for given BAL
+    function getAmountOut(uint256 amountIn) public view returns (uint256) {
         /** 
             The actual calculation is a collapsed version of this to prevent precision loss:
             => amountOut = (amountBALWei / 10^balDecimals) * (chainlinkPrice / chainlinkPrecision) * 10^usdcDecimals
@@ -95,7 +99,7 @@ contract OneWayBondingCurve {
          */
         uint256 amountOut = (amountIn * getOraclePrice()) / 10**20;
         // 50 bps arbitrage incentive
-        amountOutWithBonus = (amountOut * 10050) / 10000;
+        return (amountOut * 10050) / 10000;
     }
 
     /// @notice The peg price of the referenced oracle as USD per BAL
