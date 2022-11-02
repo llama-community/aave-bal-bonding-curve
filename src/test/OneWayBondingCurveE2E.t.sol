@@ -81,7 +81,7 @@ contract OneWayBondingCurveE2ETest is Test {
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
         vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
-        oneWayBondingCurve.purchase(0);
+        oneWayBondingCurve.purchase(0, false);
     }
 
     function testPurchaseZeroAmountOut() public {
@@ -89,7 +89,7 @@ contract OneWayBondingCurveE2ETest is Test {
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
         vm.expectRevert(OneWayBondingCurve.OnlyNonZeroAmount.selector);
-        oneWayBondingCurve.purchase(1e11);
+        oneWayBondingCurve.purchase(1e11, false);
     }
 
     function testPurchaseHitBalCeiling() public {
@@ -106,11 +106,11 @@ contract OneWayBondingCurveE2ETest is Test {
         vm.startPrank(BAL_WHALE);
         BAL.approve(address(oneWayBondingCurve), BAL_AMOUNT_IN);
         vm.expectRevert(OneWayBondingCurve.ExcessBalAmountIn.selector);
-        oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
+        oneWayBondingCurve.purchase(BAL_AMOUNT_IN, false);
         vm.stopPrank();
     }
 
-    function testPurchase() public {
+    function testPurchaseWithdrawFromAaveFalse() public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
@@ -127,7 +127,7 @@ contract OneWayBondingCurveE2ETest is Test {
 
         vm.expectEmit(true, true, false, true);
         emit Purchase(address(BAL), address(AUSDC), BAL_AMOUNT_IN, 60734568934);
-        uint256 ausdcAmountOut = oneWayBondingCurve.purchase(BAL_AMOUNT_IN);
+        uint256 ausdcAmountOut = oneWayBondingCurve.purchase(BAL_AMOUNT_IN, false);
 
         // Compensating for +1/-1 precision issues when rounding, mainly on aTokens
         assertApproxEqAbs(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorAusdcBalance - ausdcAmountOut, 1);
@@ -231,7 +231,7 @@ contract OneWayBondingCurveE2ETest is Test {
      *   POST PROPOSAL EXECUTION FUZZ TESTS  *
      *****************************************/
 
-    function testPurchaseFuzz(uint256 amount) public {
+    function testPurchaseWithdrawFromAaveFalseFuzz(uint256 amount) public {
         // Pass vote and execute proposal
         GovHelpers.passVoteAndExecute(vm, proposalId);
 
@@ -249,7 +249,7 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(oneWayBondingCurve.totalAusdcPurchased(), 0);
         assertEq(oneWayBondingCurve.totalBalReceived(), 0);
 
-        uint256 ausdcAmountOut = oneWayBondingCurve.purchase(amount);
+        uint256 ausdcAmountOut = oneWayBondingCurve.purchase(amount, false);
 
         // Compensating for +1/-1 precision issues when rounding, mainly on aTokens
         assertApproxEqAbs(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorAusdcBalance - ausdcAmountOut, 1);

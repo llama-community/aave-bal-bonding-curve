@@ -8,7 +8,7 @@ import {AaveV2Ethereum} from "@aave-address-book/AaveV2Ethereum.sol";
 
 /// @title OneWayBondingCurve
 /// @author Llama
-/// @notice One Way Bonding Curve to purchase discounted USDC for BAL upto a 100k BAL Ceiling
+/// @notice One Way Bonding Curve to purchase discounted aUSDC for BAL upto a 100k BAL Ceiling
 contract OneWayBondingCurve {
     using SafeERC20 for IERC20;
 
@@ -55,9 +55,10 @@ contract OneWayBondingCurve {
 
     /// @notice Purchase USDC for BAL
     /// @param amountIn Amount of BAL input
+    /// @param withdrawFromAave Whether to receive as USDC (True) or aUSDC (False)
     /// @return amountOut Amount of USDC received
     /// @dev Purchaser has to approve BAL transfer before calling this function
-    function purchase(uint256 amountIn) external returns (uint256) {
+    function purchase(uint256 amountIn, bool withdrawFromAave) external returns (uint256) {
         if (amountIn == 0) revert OnlyNonZeroAmount();
         if (amountIn > availableBalToBeFilled()) revert ExcessBalAmountIn();
 
@@ -69,9 +70,15 @@ contract OneWayBondingCurve {
 
         // Execute the purchase
         BAL.safeTransferFrom(msg.sender, AaveV2Ethereum.COLLECTOR, amountIn);
-        AUSDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, msg.sender, amountOut);
+        if (withdrawFromAave) {
+            AUSDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), amountOut);
+            AaveV2Ethereum.POOL.withdraw(address(USDC), amountOut, msg.sender);
+            emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
+        } else {
+            AUSDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, msg.sender, amountOut);
+            emit Purchase(address(BAL), address(AUSDC), amountIn, amountOut);
+        }
 
-        emit Purchase(address(BAL), address(AUSDC), amountIn, amountOut);
         return amountOut;
     }
 
