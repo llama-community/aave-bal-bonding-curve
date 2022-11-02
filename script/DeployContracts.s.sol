@@ -7,14 +7,14 @@ import {OneWayBondingCurve} from "../src/OneWayBondingCurve.sol";
 import {ProposalPayload} from "../src/ProposalPayload.sol";
 
 contract DeployContracts is Script {
-    uint256 private constant usdcAmount = 603000e6;
-    uint256 private constant ausdcAmount = 250000e6;
+    uint256 private constant ausdcAmount = 350_000e6;
+    uint256 private constant usdcAmount = 700_000e6;
 
     function run() external {
         vm.startBroadcast();
-        OneWayBondingCurve oneWayBondingCurve = new OneWayBondingCurve(usdcAmount);
+        OneWayBondingCurve oneWayBondingCurve = new OneWayBondingCurve();
         console.log("One Way Bonding Curve address", address(oneWayBondingCurve));
-        ProposalPayload proposalPayload = new ProposalPayload(oneWayBondingCurve, usdcAmount, ausdcAmount);
+        ProposalPayload proposalPayload = new ProposalPayload(oneWayBondingCurve, ausdcAmount, usdcAmount);
         console.log("Proposal Payload address", address(proposalPayload));
         vm.stopBroadcast();
     }
