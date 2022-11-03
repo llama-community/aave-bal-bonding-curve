@@ -55,10 +55,10 @@ contract OneWayBondingCurve {
 
     /// @notice Purchase USDC for BAL
     /// @param amountIn Amount of BAL input
-    /// @param withdrawFromAave Whether to receive as USDC (true) or aUSDC (false)
+    /// @param toUnderlying Whether to receive as USDC (true) or aUSDC (false)
     /// @return amountOut Amount of USDC received
     /// @dev Purchaser has to approve BAL transfer before calling this function
-    function purchase(uint256 amountIn, bool withdrawFromAave) external returns (uint256) {
+    function purchase(uint256 amountIn, bool toUnderlying) external returns (uint256) {
         if (amountIn == 0) revert OnlyNonZeroAmount();
         if (amountIn > availableBalToBeFilled()) revert ExcessBalAmountIn();
 
@@ -70,7 +70,7 @@ contract OneWayBondingCurve {
 
         // Execute the purchase
         BAL.safeTransferFrom(msg.sender, AaveV2Ethereum.COLLECTOR, amountIn);
-        if (withdrawFromAave) {
+        if (toUnderlying) {
             AUSDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), amountOut);
             // Compensating for +1/-1 precision issues due to rounding on aTokens while it's being transferred
             amountOut = amountOut - 1;
