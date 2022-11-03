@@ -39,7 +39,7 @@ contract ProposalPayload {
 
     /// @notice The AAVE governance executor calls this function to implement the proposal.
     function execute() external {
-        // Approve the One Way Bonding Curve contract to spend pre-defined amount of USDC tokens from AAVE V2 Collector
+        // Approve the One Way Bonding Curve contract to spend pre-defined amount of aUSDC tokens from AAVE V2 Collector
         IAaveEcosystemReserveController(AaveV2Ethereum.COLLECTOR_CONTROLLER).approve(
             AaveV2Ethereum.COLLECTOR,
             AUSDC_TOKEN,
