@@ -158,19 +158,16 @@ contract OneWayBondingCurveE2ETest is Test {
         vm.expectEmit(true, true, false, true);
         emit Purchase(address(BAL), address(USDC), BAL_AMOUNT_IN, 60734568933);
         uint256 usdcAmountOut = oneWayBondingCurve.purchase(BAL_AMOUNT_IN, true);
-        // the amountOut is reduced by 1 in the purchase() function to compensate for rounding on aTokens
-        uint256 preCorrectedUsdcAmountOut = usdcAmountOut + 1;
 
         // Aave V2 Collector gets some additional aTokens minted to it due to withdrawal happening in the purchase() function
         // see: https://github.com/aave/protocol-v2/blob/baeb455fad42d3160d571bd8d3a795948b72dd85/contracts/protocol/libraries/logic/ReserveLogic.sol#L265-L325
-        assertGe(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorAusdcBalance - preCorrectedUsdcAmountOut);
+        assertGe(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorAusdcBalance - usdcAmountOut);
         assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorBalBalance + BAL_AMOUNT_IN);
         assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
         assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaserBalBalance - BAL_AMOUNT_IN);
-        // aUSDC that may or may not be leftover in the Bonding Curve contract due to correction happening in purchase() function
-        assertApproxEqAbs(AUSDC.balanceOf(address(oneWayBondingCurve)), 0, 1);
 
-        assertEq(oneWayBondingCurve.totalAusdcPurchased(), preCorrectedUsdcAmountOut);
+        // Compensating for +1/-1 precision issues when rounding while transferring aTokens in the purchase() function
+        assertApproxEqAbs(oneWayBondingCurve.totalAusdcPurchased(), usdcAmountOut, 1);
         assertEq(oneWayBondingCurve.totalBalReceived(), BAL_AMOUNT_IN);
     }
 
@@ -316,19 +313,16 @@ contract OneWayBondingCurveE2ETest is Test {
         assertEq(oneWayBondingCurve.totalBalReceived(), 0);
 
         uint256 usdcAmountOut = oneWayBondingCurve.purchase(amount, true);
-        // the amountOut is reduced by 1 in the purchase() function to compensate for rounding on aTokens
-        uint256 preCorrectedUsdcAmountOut = usdcAmountOut + 1;
 
         // Aave V2 Collector gets some additional aTokens minted to it due to withdrawal happening in the purchase() function
         // see: https://github.com/aave/protocol-v2/blob/baeb455fad42d3160d571bd8d3a795948b72dd85/contracts/protocol/libraries/logic/ReserveLogic.sol#L265-L325
-        assertGe(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorAusdcBalance - preCorrectedUsdcAmountOut);
+        assertGe(AUSDC.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorAusdcBalance - usdcAmountOut);
         assertEq(BAL.balanceOf(AaveV2Ethereum.COLLECTOR), initialCollectorBalBalance + amount);
         assertEq(USDC.balanceOf(BAL_WHALE), initialPurchaserUsdcBalance + usdcAmountOut);
         assertEq(BAL.balanceOf(BAL_WHALE), initialPurchaserBalBalance - amount);
-        // aUSDC that may or may not be leftover in the Bonding Curve contract due to correction happening in purchase() function
-        assertApproxEqAbs(AUSDC.balanceOf(address(oneWayBondingCurve)), 0, 1);
 
-        assertEq(oneWayBondingCurve.totalAusdcPurchased(), preCorrectedUsdcAmountOut);
+        // Compensating for +1/-1 precision issues when rounding while transferring aTokens in the purchase() function
+        assertApproxEqAbs(oneWayBondingCurve.totalAusdcPurchased(), usdcAmountOut, 1);
         assertEq(oneWayBondingCurve.totalBalReceived(), amount);
     }
 

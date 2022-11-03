@@ -72,9 +72,9 @@ contract OneWayBondingCurve {
         BAL.safeTransferFrom(msg.sender, AaveV2Ethereum.COLLECTOR, amountIn);
         if (toUnderlying) {
             AUSDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, address(this), amountOut);
-            // Compensating for +1/-1 precision issues due to rounding on aTokens while it's being transferred
-            amountOut = amountOut - 1;
-            AaveV2Ethereum.POOL.withdraw(address(USDC), amountOut, msg.sender);
+            // Withdrawing entire aUSDC balance in this contract since we can't directly use 'amountOut' as
+            // input due to +1/-1 precision issues caused by rounding on aTokens while it's being transferred.
+            amountOut = AaveV2Ethereum.POOL.withdraw(address(USDC), type(uint256).max, msg.sender);
             emit Purchase(address(BAL), address(USDC), amountIn, amountOut);
         } else {
             AUSDC.safeTransferFrom(AaveV2Ethereum.COLLECTOR, msg.sender, amountOut);
