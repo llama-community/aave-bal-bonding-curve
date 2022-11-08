@@ -30,7 +30,7 @@ contract OneWayBondingCurveE2ETest is Test {
     AggregatorV3Interface public constant BAL_USD_FEED =
         AggregatorV3Interface(0xdF2917806E30300537aEB49A7663062F4d1F2b5F);
 
-    uint256 public constant AUSDC_AMOUNT = 700_000e6;
+    uint256 public constant AUSDC_AMOUNT = 800_000e6;
     uint256 public constant BAL_AMOUNT_IN = 10_000e18;
 
     OneWayBondingCurve public oneWayBondingCurve;
