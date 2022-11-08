@@ -7,7 +7,7 @@ import {OneWayBondingCurve} from "../src/OneWayBondingCurve.sol";
 import {ProposalPayload} from "../src/ProposalPayload.sol";
 
 contract DeployContracts is Script {
-    uint256 private constant ausdcAmount = 700_000e6;
+    uint256 private constant ausdcAmount = 800_000e6;
 
     function run() external {
         vm.startBroadcast();
